@@ -1,0 +1,68 @@
+[
+    {
+        "id": 1,
+        "tenant_id": 1,
+        "name": "Demo Shop · Primary",
+        "url": "https://demo.vn/api/bank-credit-alert",
+        "secret": "whk_demo_primary_8a2f1c",
+        "event_types": [
+            "money_in"
+        ],
+        "is_active": true
+    },
+    {
+        "id": 2,
+        "tenant_id": 1,
+        "name": "Demo Shop · Slack Notify",
+        "url": "https://hooks.slack.com/services/T01/B01/demo-money-in",
+        "secret": "whk_demo_slack_4d9e2b",
+        "event_types": [
+            "money_in"
+        ],
+        "is_active": true
+    },
+    {
+        "id": 3,
+        "tenant_id": 2,
+        "name": "Tour Booking · Order API",
+        "url": "https://tour.vn/webhook/bank",
+        "secret": "whk_tour_orderapi_6f3a8d",
+        "event_types": [
+            "money_in"
+        ],
+        "is_active": true
+    },
+    {
+        "id": 4,
+        "tenant_id": 2,
+        "name": "Tour Booking · Telegram Bot",
+        "url": "https://tour.vn/telegram-bridge/bank-alert",
+        "secret": "whk_tour_telegram_2b7c4e",
+        "event_types": [
+            "money_in"
+        ],
+        "is_active": false
+    },
+    {
+        "id": 5,
+        "tenant_id": 3,
+        "name": "Cafe POS · POS System",
+        "url": "https://pos.vn/payment/hook",
+        "secret": "whk_cafe_pos_9c5f1a",
+        "event_types": [
+            "money_in"
+        ],
+        "is_active": true
+    },
+    {
+        "id": 6,
+        "tenant_id": 3,
+        "name": "Cafe POS · Backup Endpoint",
+        "url": "https://pos-backup.vn/payment/hook",
+        "secret": "whk_cafe_backup_3e8d2f",
+        "event_types": [
+            "money_in"
+        ],
+        "is_active": true
+    }
+]

@@ -4,6 +4,7 @@ use App\Http\Controllers\Dashboard\DashboardSummaryController;
 use App\Http\Controllers\Dashboard\EventReplayController;
 use App\Http\Controllers\Dashboard\PairingTokenController;
 use App\Http\Controllers\Dashboard\TenantController;
+use App\Http\Controllers\Dashboard\TenantWebhookController;
 use App\Http\Controllers\Dashboard\WebhookTestController;
 use App\Http\Controllers\Mobile\ConfigController;
 use App\Http\Controllers\Mobile\HeartbeatController;
@@ -18,6 +19,12 @@ Route::prefix('dashboard')->group(function (): void {
 Route::get('tenants', [TenantController::class, 'index']);
 Route::post('tenants', [TenantController::class, 'store']);
 Route::post('pairing-token', PairingTokenController::class);
+
+Route::get('tenant-webhooks', [TenantWebhookController::class, 'index']);
+Route::post('tenant-webhooks', [TenantWebhookController::class, 'store']);
+Route::patch('tenant-webhooks/{webhook}', [TenantWebhookController::class, 'update']);
+Route::delete('tenant-webhooks/{webhook}', [TenantWebhookController::class, 'destroy']);
+
 Route::post('webhooks/test', WebhookTestController::class);
 
 Route::prefix('v1')->group(function (): void {

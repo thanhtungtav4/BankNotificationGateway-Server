@@ -13,6 +13,7 @@ const fallbackState = {
 
 let state = structuredClone(fallbackState);
 let tenantsList = [];
+let tenantWebhooks = [];
 let liveMode = false;
 let pollTimer = null;
 let expiryTimer = null;
@@ -93,9 +94,58 @@ function render() {
 
   document.querySelector('#webhook-rows').innerHTML = state.webhooks.length
     ? state.webhooks.map(row => `
-        <tr><td>${row.tenant}</td><td>${row.url}</td><td>${badge(row.status)}</td><td>${row.attempt}</td><td>${row.http}</td></tr>
+        <tr>
+          <td>${row.tenant ?? '—'}</td>
+          <td>${row.webhook_name ?? '—'}</td>
+          <td><code class="mono">${row.url ?? '—'}</code></td>
+          <td>${badge(row.status)}</td>
+          <td>${row.http ?? '-'}</td>
+        </tr>
       `).join('')
     : `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">Chưa có webhook delivery</td></tr>`;
+}
+
+function renderTenantWebhooks() {
+  const tbody = document.querySelector('#webhook-endpoint-rows');
+  const count = document.querySelector('#webhook-endpoint-count');
+  if (!tbody) return;
+  count.textContent = `${tenantWebhooks.length} endpoint`;
+  tbody.innerHTML = tenantWebhooks.length
+    ? tenantWebhooks.map(row => {
+        const tenant = tenantsList.find(t => Number(t.id) === Number(row.tenant_id));
+        const tenantName = tenant ? tenant.name : `#${row.tenant_id}`;
+        const active = row.is_active ? 'ok' : 'dead';
+        return `
+          <tr data-webhook-id="${row.id}">
+            <td>${tenantName}</td>
+            <td>${row.name ?? '—'}</td>
+            <td><code class="mono">${row.url}</code></td>
+            <td><span class="badge ${active}">${row.is_active ? 'active' : 'paused'}</span></td>
+            <td style="white-space:nowrap">
+              <button class="ghost-button" data-action="toggle" data-id="${row.id}">${row.is_active ? 'Pause' : 'Active'}</button>
+              <button class="ghost-button" data-action="delete" data-id="${row.id}">Xoá</button>
+            </td>
+          </tr>`;
+      }).join('')
+    : `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">Chưa có endpoint nào. Thêm bên trái.</td></tr>`;
+}
+
+function syncTenantSelects() {
+  ['#webhook-tenant-select', '#webhook-test-tenant'].forEach(selector => {
+    const el = document.querySelector(selector);
+    if (!el) return;
+    if (!tenantsList.length) {
+      el.innerHTML = `<option value="">Chưa có tenant — tạo ở tab Khách hàng</option>`;
+      el.disabled = true;
+      return;
+    }
+    const prev = el.value;
+    el.innerHTML = tenantsList
+      .map(t => `<option value="${t.id}">#${t.id} · ${t.name}</option>`)
+      .join('');
+    el.disabled = false;
+    if (prev && tenantsList.some(t => String(t.id) === prev)) el.value = prev;
+  });
 }
 
 async function api(path, options = {}) {
@@ -126,6 +176,7 @@ async function loadTenants() {
   } catch (_) {
     tenantsList = [];
   }
+  syncTenantSelects();
   if (!tenantsList.length) {
     select.innerHTML = `<option value="">Chưa có tenant — tạo ở tab Khách hàng</option>`;
     select.disabled = true;
@@ -137,6 +188,16 @@ async function loadTenants() {
     .join('');
   select.disabled = false;
   document.querySelector('#make-token').disabled = false;
+}
+
+async function loadTenantWebhooks() {
+  try {
+    const resp = await api('/api/tenant-webhooks');
+    tenantWebhooks = resp.data ?? [];
+  } catch (_) {
+    tenantWebhooks = [];
+  }
+  renderTenantWebhooks();
 }
 
 function showView(view) {
@@ -256,20 +317,78 @@ async function testWebhook(event) {
   event.preventDefault();
   const form = event.currentTarget;
   const data = Object.fromEntries(new FormData(form).entries());
+  const tenantId = Number(data.tenant_id);
+  if (!tenantId) {
+    toast('Chọn tenant trước', 'warn');
+    return;
+  }
   document.querySelector('#webhook-form-status').textContent = 'Đang queue…';
   try {
-    await api('/api/webhooks/test', {
+    const resp = await api('/api/webhooks/test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: JSON.stringify({ tenant_id: tenantId })
     });
-    form.reset();
-    document.querySelector('#webhook-form-status').textContent = 'Đã queue';
-    toast('Đã queue test webhook', 'ok');
+    const count = resp.dispatched ?? 0;
+    document.querySelector('#webhook-form-status').textContent = `Đã queue ${count} endpoint`;
+    toast(`Đã queue ${count} webhook cho ${resp.tenant}`, count > 0 ? 'ok' : 'warn');
     await loadDashboard();
   } catch (error) {
     document.querySelector('#webhook-form-status').textContent = `Lỗi: ${error.message}`;
     toast(`Test webhook thất bại: ${error.message}`, 'dead');
+  }
+}
+
+async function createTenantWebhook(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const data = Object.fromEntries(new FormData(form).entries());
+  const tenantId = Number(data.tenant_id);
+  if (!tenantId) {
+    toast('Chọn tenant trước', 'warn');
+    return;
+  }
+  document.querySelector('#webhook-endpoint-status').textContent = 'Đang lưu…';
+  try {
+    await api('/api/tenant-webhooks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tenant_id: tenantId, name: data.name, url: data.url })
+    });
+    form.reset();
+    document.querySelector('#webhook-endpoint-status').textContent = 'Đã thêm';
+    toast('Đã thêm webhook endpoint', 'ok');
+    await Promise.all([loadDashboard(), loadTenantWebhooks(), loadTenants()]);
+  } catch (error) {
+    document.querySelector('#webhook-endpoint-status').textContent = `Lỗi: ${error.message}`;
+    toast(`Thêm webhook thất bại: ${error.message}`, 'dead');
+  }
+}
+
+async function toggleTenantWebhook(id) {
+  const webhook = tenantWebhooks.find(w => Number(w.id) === Number(id));
+  if (!webhook) return;
+  try {
+    await api(`/api/tenant-webhooks/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: !webhook.is_active })
+    });
+    await loadTenantWebhooks();
+    toast(webhook.is_active ? 'Đã pause webhook' : 'Đã active webhook', 'ok');
+  } catch (error) {
+    toast(`Thao tác thất bại: ${error.message}`, 'dead');
+  }
+}
+
+async function deleteTenantWebhook(id) {
+  if (!confirm('Xoá webhook này? Hành động không hoàn tác.')) return;
+  try {
+    await api(`/api/tenant-webhooks/${id}`, { method: 'DELETE' });
+    await Promise.all([loadTenantWebhooks(), loadDashboard(), loadTenants()]);
+    toast('Đã xoá webhook', 'ok');
+  } catch (error) {
+    toast(`Xoá thất bại: ${error.message}`, 'dead');
   }
 }
 
@@ -312,6 +431,15 @@ document.querySelector('#refresh-button').addEventListener('click', loadDashboar
 document.querySelector('#make-token').addEventListener('click', createPairingPayload);
 document.querySelector('#tenant-form').addEventListener('submit', createTenant);
 document.querySelector('#webhook-form').addEventListener('submit', testWebhook);
+document.querySelector('#webhook-endpoint-form')?.addEventListener('submit', createTenantWebhook);
+
+document.querySelector('#webhook-endpoint-rows')?.addEventListener('click', event => {
+  const btn = event.target.closest('button[data-action]');
+  if (!btn) return;
+  const id = Number(btn.dataset.id);
+  if (btn.dataset.action === 'toggle') toggleTenantWebhook(id);
+  if (btn.dataset.action === 'delete') deleteTenantWebhook(id);
+});
 
 document.addEventListener('click', async event => {
   const copyBtn = event.target.closest('[data-copy-target]');
@@ -324,5 +452,5 @@ document.addEventListener('click', async event => {
 
 document.querySelector('#server-url').value = window.location.origin;
 loadDashboard();
-loadTenants();
+loadTenants().then(loadTenantWebhooks);
 startPolling();

@@ -4,8 +4,8 @@ namespace App\Jobs;
 
 use App\Models\WebhookDelivery;
 use App\Services\Webhooks\WebhookSignatureService;
-use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Http;
 
 final class DispatchWebhookJob implements ShouldQueue

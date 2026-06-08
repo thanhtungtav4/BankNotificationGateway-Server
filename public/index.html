@@ -183,14 +183,43 @@
         <div class="two-col">
           <div class="panel">
             <div class="panel-head">
-              <h2>Test webhook</h2>
+              <h2>Endpoint của khách hàng</h2>
+              <span class="panel-sub" id="webhook-endpoint-status">Ready</span>
+            </div>
+            <form class="form-grid" id="webhook-endpoint-form">
+              <label>Khách hàng</label>
+              <select name="tenant_id" id="webhook-tenant-select" required></select>
+              <label>Tên webhook</label>
+              <input name="name" placeholder="VD: POS chính / Slack alert" required />
+              <label>URL</label>
+              <input name="url" type="url" placeholder="https://customer.vn/api/bank-credit-alert" required />
+              <button class="primary-button full" type="submit">Thêm webhook cho tenant</button>
+            </form>
+          </div>
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Webhook đã cấu hình</h2>
+              <span class="panel-sub" id="webhook-endpoint-count">—</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Tenant</th><th>Tên</th><th>URL</th><th>Active</th><th></th></tr></thead>
+                <tbody id="webhook-endpoint-rows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Test fan-out</h2>
               <span class="panel-sub" id="webhook-form-status">Ready</span>
             </div>
             <form class="form-grid" id="webhook-form">
-              <label>Tenant</label>
-              <input name="tenant" placeholder="Demo Shop" required />
-              <label>Webhook URL</label>
-              <input name="url" placeholder="https://customer.vn/api/bank-credit-alert" required />
+              <label>Khách hàng</label>
+              <select name="tenant_id" id="webhook-test-tenant" required></select>
+              <p class="form-hint">Sẽ bắn 1 webhook giả lập đến TẤT CẢ URL active của tenant này.</p>
               <button class="primary-button full" type="submit">Queue test webhook</button>
             </form>
           </div>
@@ -201,7 +230,7 @@
             </div>
             <div class="table-wrap">
               <table>
-                <thead><tr><th>Tenant</th><th>URL</th><th>Status</th><th>Attempt</th><th>HTTP</th></tr></thead>
+                <thead><tr><th>Tenant</th><th>Endpoint</th><th>URL</th><th>Status</th><th>HTTP</th></tr></thead>
                 <tbody id="webhook-rows"></tbody>
               </table>
             </div>

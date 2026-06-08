@@ -73,5 +73,69 @@ final class DatabaseSeeder extends Seeder
             'is_active' => true,
             'event_types' => ['bank.credit_alert'],
         ]);
+
+        TenantWebhook::query()->firstOrCreate([
+            'tenant_id' => $tenant->id,
+            'url' => 'https://hooks.slack.com/services/T01/B01/demo-money-in',
+        ], [
+            'name' => 'Demo Shop · Slack Notify',
+            'secret' => Str::random(48),
+            'is_active' => true,
+            'event_types' => ['bank.credit_alert'],
+        ]);
+
+        $tourTenant = Tenant::query()->firstOrCreate(['slug' => 'tour-booking'], [
+            'plan_id' => $pro->id,
+            'name' => 'Tour Booking',
+            'status' => 'trial',
+            'monthly_fee' => 0,
+        ]);
+
+        TenantWebhook::query()->firstOrCreate([
+            'tenant_id' => $tourTenant->id,
+            'url' => 'https://tour.vn/webhook/bank',
+        ], [
+            'name' => 'Tour Booking · Order API',
+            'secret' => Str::random(48),
+            'is_active' => true,
+            'event_types' => ['bank.credit_alert'],
+        ]);
+
+        TenantWebhook::query()->firstOrCreate([
+            'tenant_id' => $tourTenant->id,
+            'url' => 'https://tour.vn/telegram-bridge/bank-alert',
+        ], [
+            'name' => 'Tour Booking · Telegram Bot',
+            'secret' => Str::random(48),
+            'is_active' => false,
+            'event_types' => ['bank.credit_alert'],
+        ]);
+
+        $cafeTenant = Tenant::query()->firstOrCreate(['slug' => 'cafe-pos'], [
+            'plan_id' => $basic->id,
+            'name' => 'Cafe POS',
+            'status' => 'active',
+            'monthly_fee' => 299000,
+        ]);
+
+        TenantWebhook::query()->firstOrCreate([
+            'tenant_id' => $cafeTenant->id,
+            'url' => 'https://pos.vn/payment/hook',
+        ], [
+            'name' => 'Cafe POS · POS System',
+            'secret' => Str::random(48),
+            'is_active' => true,
+            'event_types' => ['bank.credit_alert'],
+        ]);
+
+        TenantWebhook::query()->firstOrCreate([
+            'tenant_id' => $cafeTenant->id,
+            'url' => 'https://pos-backup.vn/payment/hook',
+        ], [
+            'name' => 'Cafe POS · Backup Endpoint',
+            'secret' => Str::random(48),
+            'is_active' => true,
+            'event_types' => ['bank.credit_alert'],
+        ]);
     }
 }

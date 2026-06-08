@@ -1,26 +1,26 @@
 [
-  {
-    "id": 1,
-    "name": "Demo Shop",
-    "plan": "Pro",
-    "status": "active",
-    "devices": 2,
-    "webhooks": 1
-  },
-  {
-    "id": 2,
-    "name": "Tour Booking",
-    "plan": "Business",
-    "status": "trial",
-    "devices": 1,
-    "webhooks": 1
-  },
-  {
-    "id": 3,
-    "name": "Cafe POS",
-    "plan": "Basic",
-    "status": "active",
-    "devices": 1,
-    "webhooks": 1
-  }
+    {
+        "id": 1,
+        "name": "Demo Shop",
+        "plan": "Pro",
+        "status": "active",
+        "devices": 2,
+        "webhooks": 2
+    },
+    {
+        "id": 2,
+        "name": "Tour Booking",
+        "plan": "Business",
+        "status": "trial",
+        "devices": 1,
+        "webhooks": 2
+    },
+    {
+        "id": 3,
+        "name": "Cafe POS",
+        "plan": "Basic",
+        "status": "active",
+        "devices": 1,
+        "webhooks": 2
+    }
 ]

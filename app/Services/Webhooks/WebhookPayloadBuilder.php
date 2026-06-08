@@ -12,7 +12,7 @@ final class WebhookPayloadBuilder
     public function build(NotificationEvent $event, ParsedTransaction $transaction): array
     {
         return [
-            'event_id' => 'evt_' . Str::ulid()->lower(),
+            'event_id' => 'evt_' . Str::lower((string) Str::ulid()),
             'type' => 'bank.credit_alert',
             'livemode' => app()->environment('production'),
             'created_at' => now()->toIso8601String(),

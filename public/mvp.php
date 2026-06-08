@@ -157,10 +157,12 @@ try {
         $content = trim((string) ($payload['title'] ?? '') . ' ' . (string) ($payload['text'] ?? '') . ' ' . (string) ($payload['big_text'] ?? ''));
         $parsed = parseNotification($content);
         $eventStatus = $parsed['amount'] === '-' || $parsed['order'] === '-' ? 'parse_failed' : 'parsed';
+        $tenantId = (int) ($device['tenant_id'] ?? 0);
+        $tenantName = (string) ($device['tenant'] ?? 'Unknown tenant');
         $event = [
             'id' => $store->nextId('events'),
-            'tenant_id' => $device['tenant_id'] ?? null,
-            'tenant' => $device['tenant'] ?? null,
+            'tenant_id' => $tenantId,
+            'tenant' => $tenantName,
             'device_id' => $device['device_id'],
             'bank' => (string) ($payload['app_name'] ?? $payload['package_name'] ?? 'Unknown'),
             'package_name' => (string) ($payload['package_name'] ?? ''),
@@ -174,16 +176,7 @@ try {
         ];
         $store->append('events', $event);
 
-        $delivery = [
-            'id' => $store->nextId('webhooks'),
-            'tenant' => $device['tenant'] ?? 'Unknown tenant',
-            'url' => 'not_configured_yet',
-            'status' => $eventStatus === 'parsed' ? 'pending' : 'failed',
-            'attempt' => 0,
-            'http' => '-',
-            'event_id' => $event['id'],
-        ];
-        $store->append('webhooks', $delivery);
+        $deliveries = fanOutWebhooks($store, $tenantId, $tenantName, $event, $eventStatus);
 
         updateDevice($store, $device['device_id'], [
             'bank' => (string) ($payload['app_name'] ?? $payload['package_name'] ?? 'Unknown'),
@@ -191,22 +184,130 @@ try {
             'seen' => 'vừa xong',
         ]);
 
-        Response::json(['status' => $eventStatus === 'parsed' ? 'accepted' : 'parse_failed', 'event_id' => $event['id']], 202);
+        Response::json([
+            'status' => $eventStatus === 'parsed' ? 'accepted' : 'parse_failed',
+            'event_id' => $event['id'],
+            'webhook_dispatched' => count($deliveries),
+        ], 202);
         return;
+    }
+
+    if ($method === 'GET' && $path === '/api/tenant-webhooks') {
+        $tenantId = isset($_GET['tenant_id']) ? (int) $_GET['tenant_id'] : 0;
+        $rows = $store->read('tenant_webhooks');
+        if ($tenantId > 0) {
+            $rows = array_values(array_filter($rows, fn ($w) => (int) ($w['tenant_id'] ?? 0) === $tenantId));
+        }
+        Response::json(['data' => $rows]);
+        return;
+    }
+
+    if ($method === 'POST' && $path === '/api/tenant-webhooks') {
+        $payload = Response::body();
+        $tenantId = (int) ($payload['tenant_id'] ?? 0);
+        $tenant = findById($store->read('tenants'), $tenantId);
+        if ($tenant === null) {
+            Response::json(['message' => 'Tenant not found'], 422);
+            return;
+        }
+        $url = trim((string) ($payload['url'] ?? ''));
+        if (! preg_match('#^https?://#i', $url)) {
+            Response::json(['message' => 'Webhook URL phải bắt đầu bằng http(s)://'], 422);
+            return;
+        }
+        $webhook = [
+            'id' => $store->nextId('tenant_webhooks'),
+            'tenant_id' => $tenantId,
+            'name' => trim((string) ($payload['name'] ?? $tenant['name'] . ' webhook')),
+            'url' => $url,
+            'secret' => 'whk_' . bin2hex(random_bytes(8)),
+            'event_types' => ['money_in'],
+            'is_active' => (bool) ($payload['is_active'] ?? true),
+        ];
+        $store->append('tenant_webhooks', $webhook);
+        incrementTenantCounter($store, $tenantId, 'webhooks');
+        Response::json(['data' => $webhook], 201);
+        return;
+    }
+
+    if (preg_match('#^/api/tenant-webhooks/(\d+)$#', $path, $matches)) {
+        $webhookId = (int) $matches[1];
+        $rows = $store->read('tenant_webhooks');
+        $index = null;
+        foreach ($rows as $i => $row) {
+            if ((int) ($row['id'] ?? 0) === $webhookId) {
+                $index = $i;
+                break;
+            }
+        }
+        if ($index === null) {
+            Response::json(['message' => 'Webhook not found'], 404);
+            return;
+        }
+
+        if ($method === 'PATCH' || $method === 'PUT') {
+            $payload = Response::body();
+            $current = $rows[$index];
+            if (isset($payload['url'])) {
+                $url = trim((string) $payload['url']);
+                if (! preg_match('#^https?://#i', $url)) {
+                    Response::json(['message' => 'Webhook URL phải bắt đầu bằng http(s)://'], 422);
+                    return;
+                }
+                $current['url'] = $url;
+            }
+            if (isset($payload['name'])) {
+                $current['name'] = trim((string) $payload['name']);
+            }
+            if (isset($payload['is_active'])) {
+                $current['is_active'] = (bool) $payload['is_active'];
+            }
+            if (isset($payload['event_types']) && is_array($payload['event_types'])) {
+                $current['event_types'] = array_values(array_map('strval', $payload['event_types']));
+            }
+            $rows[$index] = $current;
+            $store->write('tenant_webhooks', $rows);
+            Response::json(['data' => $current]);
+            return;
+        }
+
+        if ($method === 'DELETE') {
+            $removed = $rows[$index];
+            array_splice($rows, $index, 1);
+            $store->write('tenant_webhooks', $rows);
+            incrementTenantCounter($store, (int) ($removed['tenant_id'] ?? 0), 'webhooks', -1);
+            Response::json(['data' => $removed]);
+            return;
+        }
     }
 
     if ($method === 'POST' && $path === '/api/webhooks/test') {
         $payload = Response::body();
-        $delivery = [
-            'id' => $store->nextId('webhooks'),
-            'tenant' => (string) ($payload['tenant'] ?? 'Demo Shop'),
-            'url' => (string) ($payload['url'] ?? 'https://example.com/webhook'),
-            'status' => 'pending',
-            'attempt' => 0,
-            'http' => '-',
+        $tenantId = (int) ($payload['tenant_id'] ?? 0);
+        $tenant = findById($store->read('tenants'), $tenantId);
+        if ($tenant === null) {
+            Response::json(['message' => 'Chọn tenant hợp lệ trước khi test'], 422);
+            return;
+        }
+
+        $stubEvent = [
+            'id' => 0,
+            'tenant_id' => $tenantId,
+            'amount' => '500,000',
+            'order' => 'TEST' . strtoupper(bin2hex(random_bytes(3))),
+            'direction' => 'in',
+            'bank' => 'Test Bank',
+            'content' => 'Test webhook delivery from dashboard',
+            'received_at' => date(DATE_ATOM),
         ];
-        $store->append('webhooks', $delivery);
-        Response::json(['data' => $delivery], 202);
+
+        $deliveries = fanOutWebhooks($store, $tenantId, (string) $tenant['name'], $stubEvent, 'parsed', isTest: true);
+
+        Response::json([
+            'data' => $deliveries,
+            'dispatched' => count($deliveries),
+            'tenant' => $tenant['name'],
+        ], 202);
         return;
     }
 
@@ -255,15 +356,59 @@ function updateDevice(JsonStore $store, string $deviceId, array $changes): void
     $store->write('devices', $devices);
 }
 
-function incrementTenantCounter(JsonStore $store, int $tenantId, string $field): void
+function incrementTenantCounter(JsonStore $store, int $tenantId, string $field, int $delta = 1): void
 {
-    $tenants = array_map(function (array $tenant) use ($tenantId, $field): array {
+    $tenants = array_map(function (array $tenant) use ($tenantId, $field, $delta): array {
         if ((int) ($tenant['id'] ?? 0) === $tenantId) {
-            $tenant[$field] = (int) ($tenant[$field] ?? 0) + 1;
+            $tenant[$field] = max(0, (int) ($tenant[$field] ?? 0) + $delta);
         }
         return $tenant;
     }, $store->read('tenants'));
     $store->write('tenants', $tenants);
+}
+
+/**
+ * Fan-out a parsed event to all active webhooks of a tenant.
+ * Each active webhook gets its own WebhookDelivery row.
+ *
+ * @return list<array<string,mixed>> created deliveries
+ */
+function fanOutWebhooks(JsonStore $store, int $tenantId, string $tenantName, array $event, string $eventStatus, bool $isTest = false): array
+{
+    if ($tenantId <= 0) {
+        return [];
+    }
+
+    $webhooks = array_values(array_filter(
+        $store->read('tenant_webhooks'),
+        fn ($w) => (int) ($w['tenant_id'] ?? 0) === $tenantId && ! empty($w['is_active'])
+    ));
+
+    if ($webhooks === []) {
+        return [];
+    }
+
+    $created = [];
+    foreach ($webhooks as $webhook) {
+        $delivery = [
+            'id' => $store->nextId('webhooks'),
+            'tenant_id' => $tenantId,
+            'webhook_id' => (int) ($webhook['id'] ?? 0),
+            'tenant' => $tenantName,
+            'webhook_name' => (string) ($webhook['name'] ?? ''),
+            'url' => (string) ($webhook['url'] ?? ''),
+            'status' => $eventStatus === 'parsed' ? 'pending' : 'failed',
+            'attempt' => 0,
+            'http' => '-',
+            'event_id' => (int) ($event['id'] ?? 0),
+            'is_test' => $isTest,
+            'queued_at' => date(DATE_ATOM),
+        ];
+        $store->append('webhooks', $delivery);
+        $created[] = $delivery;
+    }
+
+    return $created;
 }
 
 /** @return array{amount:string,order:string,direction:string} */

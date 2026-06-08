@@ -8,8 +8,8 @@ use App\Models\TenantWebhook;
 use App\Models\WebhookDelivery;
 use App\Services\Parsing\GenericBankParser;
 use App\Services\Webhooks\WebhookPayloadBuilder;
-use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
 
 final class ParseNotificationJob implements ShouldQueue
 {
