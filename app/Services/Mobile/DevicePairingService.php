@@ -16,7 +16,7 @@ final class DevicePairingService
         $plainToken = (string) ($payload['pairing_token'] ?? '');
         $pairingToken = $this->findUsableToken($plainToken);
 
-        $deviceId = 'dev_' . Str::ulid()->lower();
+        $deviceId = 'dev_' . strtolower(Str::ulid()->toBase32());
         $deviceSecret = Str::random(64);
 
         Device::query()->create([
