@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bank Notification Gateway</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="./assets/dashboard.css" />
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 10l9-6 9 6"/><path d="M5 10v9h14v-9"/><path d="M9 14h6"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <strong>Bank Gateway</strong>
+          <span>SaaS Control</span>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="Dashboard navigation">
+        <button class="nav-item is-active" data-view="overview">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+          <span>Tổng quan</span>
+        </button>
+        <button class="nav-item" data-view="tenants">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>Khách hàng</span>
+        </button>
+        <button class="nav-item" data-view="devices">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+          <span>Thiết bị</span>
+        </button>
+        <button class="nav-item" data-view="events">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          <span>Notification</span>
+        </button>
+        <button class="nav-item" data-view="webhooks">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <span>Webhook</span>
+        </button>
+        <button class="nav-item" data-view="setup">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span>Pairing</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-card">
+        <div class="status-dot" id="live-dot"></div>
+        <div>
+          <strong id="live-status">Connecting…</strong>
+          <p id="live-note">Đang kết nối tới API.</p>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <span class="eyebrow">Central Server</span>
+          <h1 id="view-title">Tổng quan hệ thống</h1>
+        </div>
+        <div class="top-actions">
+          <span class="sync-pill" id="sync-pill">Sync pending</span>
+          <button class="ghost-button" id="refresh-button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Refresh
+          </button>
+          <button class="primary-button" data-view-jump="setup">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Tạo pairing
+          </button>
+        </div>
+      </header>
+
+      <section class="view is-visible" id="overview">
+        <div class="metric-grid" id="metric-grid"></div>
+        <div class="two-col">
+          <article class="panel">
+            <div class="panel-head">
+              <h2>Luồng xử lý</h2>
+              <span class="panel-sub">Android → Server → Webhook</span>
+            </div>
+            <div class="flow">
+              <div class="flow-step"><span class="flow-step-num">1</span><strong>Notification</strong><em>Android listener</em></div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-step"><span class="flow-step-num">2</span><strong>HMAC verify</strong><em>Device auth</em></div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-step"><span class="flow-step-num">3</span><strong>Dedupe</strong><em>Event hash</em></div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-step"><span class="flow-step-num">4</span><strong>Parse</strong><em>Amount + ND</em></div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-step"><span class="flow-step-num">5</span><strong>Webhook</strong><em>Signed POST</em></div>
+            </div>
+          </article>
+          <article class="panel danger-soft">
+            <div class="panel-head">
+              <h2>Cảnh báo production</h2>
+              <span class="panel-sub">Security gap</span>
+            </div>
+            <ul class="check-list">
+              <li>Thay token tạm <code>tenant:1</code> bằng token một lần có hạn dùng.</li>
+              <li>Bỏ <code>X-Device-Secret-Debug</code> trước production.</li>
+              <li>Bật auth dashboard, tenant policy và audit log.</li>
+              <li>Test nội dung notification ngân hàng trên Android thật.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="tenants">
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Tạo tenant mới</h2>
+              <span class="panel-sub" id="tenant-form-status">Ready</span>
+            </div>
+            <form class="form-grid" id="tenant-form">
+              <label>Tên khách</label>
+              <input name="name" placeholder="Demo Shop" required />
+              <label>Plan</label>
+              <select name="plan">
+                <option>Basic</option>
+                <option>Pro</option>
+                <option>Business</option>
+              </select>
+              <label>Status</label>
+              <select name="status">
+                <option value="trial">trial</option>
+                <option value="active">active</option>
+                <option value="suspended">suspended</option>
+              </select>
+              <button class="primary-button full" type="submit">Tạo tenant</button>
+            </form>
+          </div>
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Danh sách tenant</h2>
+              <span class="panel-sub">Live API</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>ID</th><th>Tên</th><th>Plan</th><th>Trạng thái</th><th>Thiết bị</th><th>Webhook</th></tr></thead>
+                <tbody id="tenant-rows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="devices">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Thiết bị Android</h2>
+            <span class="panel-sub">Heartbeat & queue</span>
+          </div>
+          <div class="card-grid" id="device-cards"></div>
+        </div>
+      </section>
+
+      <section class="view" id="events">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Notification gần đây</h2>
+            <span class="panel-sub">Raw → Parsed</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Bank</th><th>Nội dung</th><th>Amount</th><th>Order</th><th>Status</th></tr></thead>
+              <tbody id="event-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="webhooks">
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Test webhook</h2>
+              <span class="panel-sub" id="webhook-form-status">Ready</span>
+            </div>
+            <form class="form-grid" id="webhook-form">
+              <label>Tenant</label>
+              <input name="tenant" placeholder="Demo Shop" required />
+              <label>Webhook URL</label>
+              <input name="url" placeholder="https://customer.vn/api/bank-credit-alert" required />
+              <button class="primary-button full" type="submit">Queue test webhook</button>
+            </form>
+          </div>
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Webhook deliveries</h2>
+              <span class="panel-sub">Live delivery log</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Tenant</th><th>URL</th><th>Status</th><th>Attempt</th><th>HTTP</th></tr></thead>
+                <tbody id="webhook-rows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="setup">
+        <div class="setup-grid">
+          <article class="panel pairing-panel">
+            <div class="panel-head">
+              <h2>Tạo pairing token</h2>
+              <span class="panel-sub">One-time · 15 phút</span>
+            </div>
+
+            <div class="form-grid">
+              <label for="pair-tenant">Tenant</label>
+              <select id="pair-tenant" class="form-control"></select>
+
+              <label for="server-url">Server URL</label>
+              <input id="server-url" class="form-control" />
+              <p class="form-hint">URL Android sẽ kết nối tới. Mặc định là origin hiện tại.</p>
+
+              <label for="device-name">Tên thiết bị (tuỳ chọn)</label>
+              <input id="device-name" class="form-control" placeholder="VD: MB Phone 01" />
+
+              <button class="primary-button full" id="make-token">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                Tạo pairing token
+              </button>
+            </div>
+          </article>
+
+          <article class="panel pairing-result" id="pairing-result" data-state="empty">
+            <div class="panel-head">
+              <h2>Kết quả</h2>
+              <span class="panel-sub" id="pairing-expiry">Chưa có token</span>
+            </div>
+
+            <div class="pairing-empty" id="pairing-empty">
+              <div class="pairing-empty-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              </div>
+              <p>Chọn tenant và bấm <strong>Tạo pairing token</strong> để sinh QR code.</p>
+            </div>
+
+            <div class="pairing-content" id="pairing-content" hidden>
+              <div class="qr-wrap">
+                <div class="qr-canvas" id="qr-canvas"></div>
+                <p class="qr-hint">Quét bằng app Android để pair</p>
+              </div>
+
+              <div class="kv">
+                <span>Server URL</span>
+                <div class="copy-row">
+                  <code id="pair-server"></code>
+                  <button class="icon-button" data-copy-target="pair-server" aria-label="Copy server URL">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="kv">
+                <span>Pairing token</span>
+                <div class="copy-row">
+                  <code id="pair-token" class="mono"></code>
+                  <button class="icon-button" data-copy-target="pair-token" aria-label="Copy pairing token">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <details class="raw-payload">
+                <summary>Xem JSON payload</summary>
+                <pre id="pair-json"></pre>
+                <button class="ghost-button" data-copy-target="pair-json">Copy JSON</button>
+              </details>
+            </div>
+          </article>
+
+          <article class="panel checklist-panel">
+            <div class="panel-head">
+              <h2>Checklist pairing thật</h2>
+              <span class="panel-sub">Android device</span>
+            </div>
+            <ol class="steps">
+              <li><strong>Build APK</strong> – mở Android Studio và build debug APK của app client.</li>
+              <li><strong>Cài đặt</strong> – install APK lên điện thoại sẽ chạy thật.</li>
+              <li><strong>Quét QR</strong> – mở app, quét QR ở khung bên trên (token chỉ dùng 1 lần, hết hạn sau 15 phút).</li>
+              <li><strong>Whitelist package</strong> – chọn app ngân hàng cần lắng nghe.</li>
+              <li><strong>Bật Notification Access</strong> – Settings → Special access → Notification access.</li>
+              <li><strong>Test giao dịch</strong> – gửi tiền nhỏ vào tài khoản, kiểm tra tab Notification ở trên.</li>
+            </ol>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <script src="./assets/dashboard.js"></script>
+</body>
+</html>

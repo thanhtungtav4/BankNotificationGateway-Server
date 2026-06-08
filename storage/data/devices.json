@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "name": "MB Phone 01",
+    "tenant": "Demo Shop",
+    "bank": "MB Bank",
+    "status": "online",
+    "queue": 0,
+    "seen": "1 phút trước"
+  },
+  {
+    "id": 2,
+    "name": "VCB Phone 02",
+    "tenant": "Demo Shop",
+    "bank": "Vietcombank",
+    "status": "online",
+    "queue": 2,
+    "seen": "3 phút trước"
+  },
+  {
+    "id": 3,
+    "name": "ACB Counter",
+    "tenant": "Tour Booking",
+    "bank": "ACB",
+    "status": "offline",
+    "queue": 6,
+    "seen": "42 phút trước"
+  }
+]

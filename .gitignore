@@ -1,0 +1,59 @@
+# Composer
+/vendor/
+composer.phar
+
+# Environment
+.env
+.env.backup
+.env.production
+.env.*.local
+
+# Storage runtime
+/storage/*.key
+/storage/logs/*
+!/storage/logs/.gitkeep
+/storage/framework/cache/*
+!/storage/framework/cache/.gitkeep
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitkeep
+/storage/framework/views/*
+!/storage/framework/views/.gitkeep
+/storage/framework/testing/*
+!/storage/framework/testing/.gitkeep
+
+# Bootstrap cache
+/bootstrap/cache/*
+!/bootstrap/cache/.gitkeep
+
+# Node
+/node_modules
+/public/build
+/public/hot
+/public/storage
+npm-debug.log
+yarn-error.log
+package-lock.json
+
+# IDE & local config (CRITICAL: sftp.json contains server credentials)
+.vscode/sftp.json
+.vscode/settings.json
+.idea/
+.fleet/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local data dumps
+*.sql
+*.sql.gz
+*.zip
+*.tar.gz
+
+# Docker local overrides
+docker-compose.override.yml

@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "bank": "MB Bank",
+    "content": "+2,500,000 VND ND: TOUR10082",
+    "amount": "2,500,000",
+    "order": "TOUR10082",
+    "status": "parsed"
+  },
+  {
+    "id": 2,
+    "bank": "VCB",
+    "content": "+850,000 VND DH884421",
+    "amount": "850,000",
+    "order": "DH884421",
+    "status": "forwarded"
+  },
+  {
+    "id": 3,
+    "bank": "ACB",
+    "content": "Notification content hidden",
+    "amount": "-",
+    "order": "-",
+    "status": "parse_failed"
+  }
+]
