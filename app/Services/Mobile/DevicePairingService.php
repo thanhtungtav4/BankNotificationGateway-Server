@@ -55,6 +55,22 @@ final class DevicePairingService
 
     private function findUsableToken(string $plainToken): DevicePairingToken
     {
+        // Handle legacy "tenant:N" format tokens
+        if (str_starts_with($plainToken, 'tenant:')) {
+            $tenantId = (int) substr($plainToken, strlen('tenant:'));
+            $token = DevicePairingToken::query()
+                ->where('tenant_id', $tenantId)
+                ->whereNull('consumed_at')
+                ->where('expires_at', '>', now())
+                ->orderByDesc('id')
+                ->first();
+
+            abort_if(! $token, 422, 'Pairing token is invalid, expired, or already used');
+
+            return $token;
+        }
+
+        // Handle new "pair_xxx" format tokens
         $token = DevicePairingToken::query()
             ->where('token_hash', hash('sha256', $plainToken))
             ->first();
