@@ -52,6 +52,10 @@
           </svg>
           <span>Trợ lý AI</span>
         </button>
+        <button class="nav-item" data-view="api-docs">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <span>Tài liệu API</span>
+        </button>
         <button class="nav-item" data-view="setup">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
           <span>Pairing</span>
@@ -486,6 +490,177 @@
               <li><strong>Test giao dịch</strong> – gửi tiền nhỏ vào tài khoản, kiểm tra tab Notification ở trên.</li>
             </ol>
           </article>
+        </div>
+      </section>
+
+      <section class="view" id="api-docs">
+        <div style="display: grid; grid-template-columns: 240px 1fr; gap: 24px;">
+          <!-- Left sub-nav -->
+          <div style="position: sticky; top: 20px; align-self: start; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 4px;">
+            <h3 class="eyebrow" style="margin-bottom: 8px; padding-left: 8px;">Mục lục tài liệu</h3>
+            <button class="ghost-button" onclick="document.getElementById('doc-general').scrollIntoView({behavior: 'smooth'})" style="justify-content: flex-start; text-align: left; width: 100%; border: none;">1. Tổng quan</button>
+            <button class="ghost-button" onclick="document.getElementById('doc-hmac').scrollIntoView({behavior: 'smooth'})" style="justify-content: flex-start; text-align: left; width: 100%; border: none;">2. Chữ ký bảo mật HMAC</button>
+            <button class="ghost-button" onclick="document.getElementById('doc-payload').scrollIntoView({behavior: 'smooth'})" style="justify-content: flex-start; text-align: left; width: 100%; border: none;">3. Webhook Payload</button>
+            <button class="ghost-button" onclick="document.getElementById('doc-mobile').scrollIntoView({behavior: 'smooth'})" style="justify-content: flex-start; text-align: left; width: 100%; border: none;">4. API Di động</button>
+            <button class="ghost-button" onclick="document.getElementById('doc-dashboard').scrollIntoView({behavior: 'smooth'})" style="justify-content: flex-start; text-align: left; width: 100%; border: none;">5. API Quản lý</button>
+          </div>
+
+          <!-- Right content -->
+          <div style="display: flex; flex-direction: column; gap: 24px;">
+            <!-- Section 1: General -->
+            <div class="panel" id="doc-general">
+              <div class="panel-head">
+                <h2>1. Tổng quan & Base URL</h2>
+              </div>
+              <p>Hệ thống hỗ trợ 2 giao thức chính: <strong>API truyền tải</strong> (cho thiết bị di động gửi thông báo) và <strong>Webhook</strong> (gửi cập nhật giao dịch theo thời gian thực về máy chủ của bạn).</p>
+              <div class="form-grid">
+                <label>Base URL máy chủ live</label>
+                <div style="display: flex; gap: 8px;">
+                  <code class="mono" id="doc-base-url" style="background: var(--surface-2); padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--line); flex-grow: 1; display: block;">https://notification.nttung.dev/api</code>
+                  <button class="ghost-button" data-copy-target="doc-base-url">Copy</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 2: HMAC -->
+            <div class="panel" id="doc-hmac">
+              <div class="panel-head">
+                <h2>2. Chữ ký bảo mật HMAC</h2>
+                <span class="panel-sub">Xác thực nguồn gốc các gói tin từ thiết bị và webhook</span>
+              </div>
+              <p>Để đảm bảo tính toàn vẹn và chống giả mạo, tất cả yêu cầu HTTP từ điện thoại gửi lên hoặc từ Webhook gửi đi đều được ký bằng thuật toán <strong>HMAC-SHA256</strong> với khoá bí mật thiết bị (<code>device_secret</code>) hoặc webhook secret.</p>
+              <h4 style="margin-top: 12px; margin-bottom: 6px; font-weight: 600;">Cơ chế tạo chữ ký (Signature):</h4>
+              <p>Chuỗi ký được tạo bằng cách nối chuỗi <strong>Timestamp (Unix Epoch)</strong> và <strong>Raw JSON Request Body</strong> ngăn cách bởi dấu chấm <code>.</code>. Chữ ký sau đó được băm bằng thuật toán SHA256 kèm theo Secret.</p>
+              <pre class="mono" style="background: var(--bg-grid); padding: 12px; border-radius: var(--radius); border: 1px solid var(--line); font-size: 13px; overflow-x: auto; margin: 8px 0;">
+signature = HMAC-SHA256(timestamp + "." + raw_body, secret)</pre>
+              <p>Các HTTP Header đi kèm yêu cầu:</p>
+              <ul style="padding-left: 20px; margin: 8px 0;">
+                <li><code class="mono">X-Device-Id</code>: ID của thiết bị gửi tin.</li>
+                <li><code class="mono">X-Timestamp</code>: Thời gian gửi tin (Unix timestamp).</li>
+                <li><code class="mono">X-Signature</code>: Chữ ký HMAC-SHA256 được tính toán dưới dạng chuỗi hexa.</li>
+              </ul>
+              
+              <h4 style="margin-top: 16px; margin-bottom: 6px; font-weight: 600;">Ví dụ code kiểm tra chữ ký (PHP):</h4>
+              <pre class="mono" style="background: var(--bg-grid); padding: 12px; border-radius: var(--radius); border: 1px solid var(--line); font-size: 12px; overflow-x: auto; line-height: 1.45; margin: 8px 0;">
+&lt;?php
+$signature = $_SERVER['HTTP_X_SIGNATURE'] ?? '';
+$timestamp = $_SERVER['HTTP_X_TIMESTAMP'] ?? '';
+$body = file_get_contents('php://input');
+
+$expectedSignature = hash_hmac('sha256', $timestamp . '.' . $body, $secretKey);
+if (hash_equals($expectedSignature, $signature)) {
+    // Chữ ký hợp lệ
+}</pre>
+            </div>
+
+            <!-- Section 3: Webhook Payload -->
+            <div class="panel" id="doc-payload">
+              <div class="panel-head">
+                <h2>3. Webhook Payload Format</h2>
+                <span class="panel-sub">Cấu trúc dữ liệu JSON gửi về Server của bạn</span>
+              </div>
+              <p>Khi có giao dịch biến động số dư tiền vào (<code>money_in</code>), Webhook sẽ tự động kích hoạt và POST về địa chỉ URL cấu hình của bạn:</p>
+              <pre class="mono" id="doc-webhook-json" style="background: var(--bg-grid); padding: 12px; border-radius: var(--radius); border: 1px solid var(--line); font-size: 12px; overflow-x: auto; max-height: 300px; margin: 8px 0;">
+{
+  "event_id": "evt_01kttcwr0cjchk9vpap95fbse5",
+  "type": "bank.credit_alert",
+  "livemode": true,
+  "created_at": "2026-06-11T10:51:24+07:00",
+  "data": {
+    "device_id": "dev_vietcombank_real",
+    "bank_app": "Vietcombank",
+    "package_name": "com.vietcombank",
+    "amount": 50000,
+    "currency": "VND",
+    "direction": "in",
+    "order_code": "DH123456",
+    "transfer_content": "DH123456 thanh toan",
+    "confidence": 0.95,
+    "posted_at": "2026-06-11T10:51:24+07:00",
+    "raw": {
+      "title": "Biến động số dư",
+      "text": "Vietcombank GD: +50,000 VND. ND: DH123456 thanh toan",
+      "big_text": null
+    }
+  }
+}</pre>
+              <div style="text-align: right; margin-top: 8px;">
+                <button class="ghost-button" data-copy-target="doc-webhook-json">Copy JSON Payload</button>
+              </div>
+            </div>
+
+            <!-- Section 4: Mobile API -->
+            <div class="panel" id="doc-mobile">
+              <div class="panel-head">
+                <h2>4. API dành cho Thiết bị di động (Mobile App)</h2>
+              </div>
+              <p>Các endpoint này được sử dụng bởi ứng dụng Android Gateway để gửi dữ liệu về Server. Toàn bộ đều yêu cầu Chữ ký HMAC.</p>
+              <table class="table" style="width: 100%; border-collapse: collapse; margin-top: 12px;">
+                <thead>
+                  <tr style="border-bottom: 2px solid var(--line);">
+                    <th style="padding: 10px; text-align: left;">Method & Route</th>
+                    <th style="padding: 10px; text-align: left;">Chức năng</th>
+                    <th style="padding: 10px; text-align: left;">Tham số body</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="border-bottom: 1px solid var(--line-2);">
+                    <td style="padding: 10px;"><span class="badge" style="background: var(--accent); color: white;">POST</span> <code class="mono">/v1/mobile/pair</code></td>
+                    <td style="padding: 10px;">Kích hoạt ghép đôi điện thoại với Token sinh ra từ web dashboard.</td>
+                    <td style="padding: 10px;"><code class="mono">pairing_token, device_name</code></td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--line-2);">
+                    <td style="padding: 10px;"><span class="badge" style="background: var(--accent); color: white;">POST</span> <code class="mono">/v1/mobile/heartbeat</code></td>
+                    <td style="padding: 10px;">Báo cáo trạng thái pin, trạng thái cắm sạc và số lượng tin nhắn trong hàng chờ mỗi 15 phút.</td>
+                    <td style="padding: 10px;"><code class="mono">battery_level, is_charging, queue_pending</code></td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--line-2);">
+                    <td style="padding: 10px;"><span class="badge" style="background: var(--accent); color: white;">POST</span> <code class="mono">/v1/mobile/notifications</code></td>
+                    <td style="padding: 10px;">Gửi thông tin SMS / Notification của ngân hàng đã đọc được lên hệ thống.</td>
+                    <td style="padding: 10px;"><code class="mono">package_name, app_name, title, text, posted_at, notification_key</code></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Section 5: Dashboard API -->
+            <div class="panel" id="doc-dashboard">
+              <div class="panel-head">
+                <h2>5. API Quản lý (Dashboard API)</h2>
+              </div>
+              <p>Dashboard API yêu cầu token định dạng <strong>Bearer Token</strong> trong header <code>Authorization</code>.</p>
+              <table class="table" style="width: 100%; border-collapse: collapse; margin-top: 12px;">
+                <thead>
+                  <tr style="border-bottom: 2px solid var(--line);">
+                    <th style="padding: 10px; text-align: left;">Method & Route</th>
+                    <th style="padding: 10px; text-align: left;">Chức năng</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="border-bottom: 1px solid var(--line-2);">
+                    <td style="padding: 10px;"><span class="badge" style="background: var(--accent); color: white;">POST</span> <code class="mono">/admin/auth/login</code></td>
+                    <td style="padding: 10px;">Đăng nhập lấy Sanctum Token truy cập quản trị hệ thống.</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--line-2);">
+                    <td style="padding: 10px;"><span class="badge" style="background: var(--success-soft); color: var(--success);">GET</span> <code class="mono">/tenants</code></td>
+                    <td style="padding: 10px;">Danh sách các Tenants (Khách hàng) đang quản lý.</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--line-2);">
+                    <td style="padding: 10px;"><span class="badge" style="background: var(--accent); color: white;">POST</span> <code class="mono">/tenant-webhooks</code></td>
+                    <td style="padding: 10px;">Thêm cấu hình Webhook URL mới cho Tenant.</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--line-2);">
+                    <td style="padding: 10px;"><span class="badge" style="background: var(--accent); color: white;">POST</span> <code class="mono">/tenant-webhooks/{id}/parser-config</code></td>
+                    <td style="padding: 10px;">Lưu Regex bóc tách tuỳ chỉnh cho Webhook chỉ định.</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--line-2);">
+                    <td style="padding: 10px;"><span class="badge" style="background: var(--success-soft); color: var(--success);">GET</span> <code class="mono">/audit-logs</code></td>
+                    <td style="padding: 10px;">Truy xuất danh sách nhật ký kiểm toán hệ thống.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </section>
     </main>

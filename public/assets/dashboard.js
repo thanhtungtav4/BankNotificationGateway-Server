@@ -32,7 +32,8 @@ const titles = {
   webhooks: 'Webhook delivery',
   setup: 'Pairing thiết bị',
   'tenant-detail': 'Chi tiết tenant',
-  'ai-assistant': 'Trợ lý AI'
+  'ai-assistant': 'Trợ lý AI',
+  'api-docs': 'Tài liệu API & Webhooks'
 };
 
 const okStatuses = new Set(['active', 'online', 'sent', 'parsed', 'forwarded']);
