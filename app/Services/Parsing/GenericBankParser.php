@@ -114,7 +114,7 @@ final class GenericBankParser implements BankParserInterface
 
     private function extractOrderCode(string $text, ?string $customPattern): ?string
     {
-        $pattern = $customPattern ?: '/(TOUR|DH|ORDER|BK|INV)[A-Z0-9]{4,20}/i';
+        $pattern = $customPattern ?: '/(NTR|TOUR|DH|ORDER|BK|INV)[A-Z0-9-]{4,25}/i';
         return preg_match($pattern, $text, $matches) ? $matches[0] : null;
     }
 
