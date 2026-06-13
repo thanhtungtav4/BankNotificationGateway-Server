@@ -494,6 +494,268 @@
       </section>
 
       <section class="view" id="api-docs">
+        <style>
+          /* Swagger Playgrounds Styling */
+          .swagger-auth-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface-2);
+            border: 1px solid var(--line);
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            gap: 12px;
+            flex-wrap: wrap;
+          }
+          .swagger-auth-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            font-size: 13px;
+          }
+          .swagger-auth-status.authorized { color: var(--success); }
+          .swagger-auth-status.unauthorized { color: var(--muted); }
+          
+          .swagger-search-bar {
+            position: relative;
+          }
+          .swagger-search-input {
+            width: 100%;
+            padding: 10px 16px 10px 38px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            color: var(--ink);
+            font-size: 13.5px;
+            transition: border-color .15s;
+          }
+          .swagger-search-input:focus {
+            border-color: var(--accent);
+            outline: none;
+          }
+          .swagger-search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            pointer-events: none;
+            font-size: 14px;
+          }
+          
+          .swagger-group {
+            margin-top: 20px;
+          }
+          .swagger-group-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--ink-soft);
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 6px;
+            letter-spacing: 0.02em;
+          }
+          
+          .swagger-endpoint {
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+            margin-bottom: 10px;
+            overflow: hidden;
+            background: var(--surface);
+            transition: box-shadow 0.12s, border-color 0.12s;
+          }
+          .swagger-endpoint:hover {
+            box-shadow: var(--shadow-sm);
+          }
+          .swagger-endpoint.get { border-color: #10b981; }
+          .swagger-endpoint.post { border-color: #3b82f6; }
+          .swagger-endpoint.patch { border-color: #f59e0b; }
+          .swagger-endpoint.delete { border-color: #ef4444; }
+          
+          .swagger-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            cursor: pointer;
+            user-select: none;
+            gap: 12px;
+            transition: background-color 0.1s;
+          }
+          .swagger-endpoint.get .swagger-header { background: #f0fdf4; }
+          .swagger-endpoint.post .swagger-header { background: #eff6ff; }
+          .swagger-endpoint.patch .swagger-header { background: #fffbeb; }
+          .swagger-endpoint.delete .swagger-header { background: #fef2f2; }
+          
+          .swagger-endpoint.get .swagger-header:hover { background: #dcfce7; }
+          .swagger-endpoint.post .swagger-header:hover { background: #dbeafe; }
+          .swagger-endpoint.patch .swagger-header:hover { background: #fef3c7; }
+          .swagger-endpoint.delete .swagger-header:hover { background: #fee2e2; }
+          
+          .swagger-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-grow: 1;
+            min-width: 0;
+          }
+          .swagger-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 800;
+            color: white;
+            text-align: center;
+            min-width: 60px;
+            flex-shrink: 0;
+          }
+          .swagger-endpoint.get .swagger-badge { background: #10b981; }
+          .swagger-endpoint.post .swagger-badge { background: #3b82f6; }
+          .swagger-endpoint.patch .swagger-badge { background: #f59e0b; }
+          .swagger-endpoint.delete .swagger-badge { background: #ef4444; }
+          
+          .swagger-path {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ink);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+          .swagger-summary {
+            font-size: 12.5px;
+            color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: normal;
+          }
+          .swagger-header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+          }
+          .swagger-arrow {
+            font-size: 11px;
+            color: var(--muted);
+            transition: transform 0.15s ease;
+          }
+          .swagger-endpoint.is-expanded .swagger-arrow {
+            transform: rotate(180deg);
+          }
+          
+          .swagger-content {
+            display: none;
+            padding: 16px;
+            border-top: 1px solid var(--line);
+            background: var(--surface);
+          }
+          .swagger-endpoint.is-expanded .swagger-content {
+            display: block;
+          }
+          
+          .swagger-desc {
+            font-size: 13px;
+            margin-bottom: 14px;
+            color: var(--ink-soft);
+            line-height: 1.5;
+          }
+          
+          .swagger-section-title {
+            font-size: 11.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--muted);
+            margin-top: 14px;
+            margin-bottom: 8px;
+          }
+          
+          .swagger-params-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 14px;
+            border: 1px solid var(--line-2);
+          }
+          .swagger-params-table th, .swagger-params-table td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--line-2);
+            font-size: 12.5px;
+          }
+          .swagger-params-table th {
+            font-weight: 600;
+            color: var(--muted);
+            background: var(--surface-2);
+          }
+          .swagger-param-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--ink);
+          }
+          .swagger-param-required {
+            color: var(--danger);
+            font-size: 11px;
+            vertical-align: super;
+            font-weight: bold;
+          }
+          
+          .swagger-textarea {
+            width: 100%;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            padding: 10px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+            background: var(--surface-2);
+            color: var(--ink);
+            resize: vertical;
+            line-height: 1.4;
+          }
+          
+          .swagger-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+          }
+          
+          .swagger-response {
+            margin-top: 14px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+          }
+          .swagger-response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: var(--surface-2);
+            border-bottom: 1px solid var(--line);
+            font-size: 12.5px;
+          }
+          .swagger-response-status {
+            font-weight: 600;
+          }
+          .swagger-response-status.success { color: var(--success); }
+          .swagger-response-status.error { color: var(--danger); }
+          .swagger-response-body {
+            margin: 0;
+            padding: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11.5px;
+            background: var(--bg-grid);
+            color: var(--ink);
+            max-height: 250px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+          }
+        </style>
         <div style="display: grid; grid-template-columns: 240px 1fr; gap: 24px;">
           <!-- Left sub-nav -->
           <div style="position: sticky; top: 20px; align-self: start; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 4px;">
@@ -501,8 +763,9 @@
             <button class="ghost-button" onclick="document.getElementById('doc-general').scrollIntoView({behavior: 'smooth'})" style="justify-content: flex-start; text-align: left; width: 100%; border: none;">1. Tổng quan</button>
             <button class="ghost-button" onclick="document.getElementById('doc-hmac').scrollIntoView({behavior: 'smooth'})" style="justify-content: flex-start; text-align: left; width: 100%; border: none;">2. Chữ ký bảo mật HMAC</button>
             <button class="ghost-button" onclick="document.getElementById('doc-payload').scrollIntoView({behavior: 'smooth'})" style="justify-content: flex-start; text-align: left; width: 100%; border: none;">3. Webhook Payload</button>
-            <button class="ghost-button" onclick="document.getElementById('doc-mobile').scrollIntoView({behavior: 'smooth'})" style="justify-content: flex-start; text-align: left; width: 100%; border: none;">4. API Di động</button>
-            <button class="ghost-button" onclick="document.getElementById('doc-dashboard').scrollIntoView({behavior: 'smooth'})" style="justify-content: flex-start; text-align: left; width: 100%; border: none;">5. API Quản lý</button>
+            <button class="ghost-button" onclick="document.getElementById('doc-tryitout').scrollIntoView({behavior: 'smooth'})" style="justify-content: flex-start; text-align: left; width: 100%; border: none;">4. Swagger Playgrounds</button>
+            <button class="ghost-button" onclick="document.getElementById('doc-mobile').scrollIntoView({behavior: 'smooth'})" style="justify-content: flex-start; text-align: left; width: 100%; border: none;">5. API Di động</button>
+            <button class="ghost-button" onclick="document.getElementById('doc-dashboard').scrollIntoView({behavior: 'smooth'})" style="justify-content: flex-start; text-align: left; width: 100%; border: none;">6. API Quản lý</button>
           </div>
 
           <!-- Right content -->
@@ -589,10 +852,19 @@ if (hash_equals($expectedSignature, $signature)) {
               </div>
             </div>
 
-            <!-- Section 4: Mobile API -->
+            <!-- Section 4: Swagger Playgrounds -->
+            <div class="panel" id="doc-tryitout">
+              <div class="panel-head">
+                <h2>4. Swagger Playgrounds (Thử nghiệm API Tương tác)</h2>
+                <span class="panel-sub">Nhập dữ liệu và thực thi cuộc gọi trực tiếp từ trình duyệt</span>
+              </div>
+              <div id="swagger-playground-container"></div>
+            </div>
+
+            <!-- Section 5: Mobile API -->
             <div class="panel" id="doc-mobile">
               <div class="panel-head">
-                <h2>4. API dành cho Thiết bị di động (Mobile App)</h2>
+                <h2>5. API dành cho Thiết bị di động (Mobile App)</h2>
               </div>
               <p>Các endpoint này được sử dụng bởi ứng dụng Android Gateway để gửi dữ liệu về Server. Toàn bộ đều yêu cầu Chữ ký HMAC.</p>
               <table class="table" style="width: 100%; border-collapse: collapse; margin-top: 12px;">
@@ -623,10 +895,10 @@ if (hash_equals($expectedSignature, $signature)) {
               </table>
             </div>
 
-            <!-- Section 5: Dashboard API -->
+            <!-- Section 6: Dashboard API -->
             <div class="panel" id="doc-dashboard">
               <div class="panel-head">
-                <h2>5. API Quản lý (Dashboard API)</h2>
+                <h2>6. API Quản lý (Dashboard API)</h2>
               </div>
               <p>Dashboard API yêu cầu token định dạng <strong>Bearer Token</strong> trong header <code>Authorization</code>.</p>
               <table class="table" style="width: 100%; border-collapse: collapse; margin-top: 12px;">
@@ -642,7 +914,7 @@ if (hash_equals($expectedSignature, $signature)) {
                     <td style="padding: 10px;">Đăng nhập lấy Sanctum Token truy cập quản trị hệ thống.</td>
                   </tr>
                   <tr style="border-bottom: 1px solid var(--line-2);">
-                    <td style="padding: 10px;"><span class="badge" style="background: var(--success-soft); color: var(--success);">GET</span> <code class="mono">/tenants</code></td>
+                    <td style="padding: 10px;"><span class="badge" style="background: var(--accent); color: var(--success-soft);">GET</span> <code class="mono">/tenants</code></td>
                     <td style="padding: 10px;">Danh sách các Tenants (Khách hàng) đang quản lý.</td>
                   </tr>
                   <tr style="border-bottom: 1px solid var(--line-2);">
@@ -662,6 +934,660 @@ if (hash_equals($expectedSignature, $signature)) {
             </div>
           </div>
         </div>
+
+        <script>
+          // Entire list of API endpoints for interactive Swagger documentation
+          const swaggerEndpoints = [
+            {
+              group: 'Hệ thống (System)',
+              method: 'GET',
+              path: '/api/health',
+              summary: 'Kiểm tra sức khỏe hệ thống',
+              desc: 'Kiểm tra trạng thái kết nối Cơ sở dữ liệu, Redis, hàng đợi (Queue) và bộ nhớ (RAM) của hệ thống.',
+              auth: 'public',
+              params: []
+            },
+            {
+              group: 'Xác thực (Auth)',
+              method: 'POST',
+              path: '/api/admin/auth/login',
+              summary: 'Đăng nhập Admin',
+              desc: 'Đăng nhập bằng tài khoản quản trị hệ thống SaaS để lấy Sanctum Bearer Token.',
+              auth: 'public',
+              params: [],
+              body: {
+                email: 'admin@example.com',
+                password: 'password'
+              }
+            },
+            {
+              group: 'Xác thực (Auth)',
+              method: 'GET',
+              path: '/api/admin/auth/me',
+              summary: 'Thông tin tài khoản hiện tại',
+              desc: 'Lấy thông tin tài khoản Admin đang đăng nhập dựa trên Bearer Token.',
+              auth: 'bearer',
+              params: []
+            },
+            {
+              group: 'Khách hàng (Tenants)',
+              method: 'GET',
+              path: '/api/tenants',
+              summary: 'Danh sách các Tenants',
+              desc: 'Lấy danh sách các Tenants (Khách hàng) đang được quản lý bởi tài khoản của bạn.',
+              auth: 'bearer',
+              params: []
+            },
+            {
+              group: 'Khách hàng (Tenants)',
+              method: 'POST',
+              path: '/api/tenants',
+              summary: 'Tạo mới Tenant',
+              desc: 'Tạo một Tenant mới với thông tin Plan (Basic, Pro, Business) và Trạng thái (trial, active, suspended).',
+              auth: 'bearer',
+              params: [],
+              body: {
+                name: 'Cửa hàng Demo',
+                plan: 'Basic',
+                status: 'active'
+              }
+            },
+            {
+              group: 'Khách hàng (Tenants)',
+              method: 'GET',
+              path: '/api/tenants/{id}',
+              summary: 'Chi tiết Tenant',
+              desc: 'Lấy thông tin chi tiết một Tenant cụ thể bằng ID.',
+              auth: 'bearer',
+              params: [
+                { name: 'id', type: 'path', required: true, description: 'ID của Tenant cần xem', default: '1' }
+              ]
+            },
+            {
+              group: 'Khách hàng (Tenants)',
+              method: 'PATCH',
+              path: '/api/tenants/{id}',
+              summary: 'Cập nhật Tenant',
+              desc: 'Cập nhật thông tin Tenant (Tên, Gói cước, Trạng thái) bằng ID.',
+              auth: 'bearer',
+              params: [
+                { name: 'id', type: 'path', required: true, description: 'ID của Tenant cần cập nhật', default: '1' }
+              ],
+              body: {
+                name: 'Tên Tenant mới',
+                plan: 'Pro',
+                status: 'active'
+              }
+            },
+            {
+              group: 'Khách hàng (Tenants)',
+              method: 'POST',
+              path: '/api/tenants/{id}/parser-config',
+              summary: 'Lưu Regex Parsing của Tenant',
+              desc: 'Cập nhật hoặc thêm mới cấu hình Regex bóc tách số tiền và nội dung chuyển khoản cho Tenant.',
+              auth: 'bearer',
+              params: [
+                { name: 'id', type: 'path', required: true, description: 'ID của Tenant', default: '1' }
+              ],
+              body: {
+                bank_app: 'Vietcombank',
+                regex_pattern: 'GD: \\+(\\d+) VND. ND: (\\w+)',
+                amount_group: 1,
+                content_group: 2
+              }
+            },
+            {
+              group: 'Khách hàng (Tenants)',
+              method: 'DELETE',
+              path: '/api/tenants/{id}',
+              summary: 'Xóa Tenant',
+              desc: 'Xóa vĩnh viễn một Tenant khỏi hệ thống.',
+              auth: 'bearer',
+              params: [
+                { name: 'id', type: 'path', required: true, description: 'ID của Tenant cần xóa', default: '1' }
+              ]
+            },
+            {
+              group: 'Thiết bị (Devices)',
+              method: 'GET',
+              path: '/api/devices',
+              summary: 'Danh sách Thiết bị',
+              desc: 'Lấy danh sách các thiết bị Android đã ghép đôi vào các Tenant của bạn.',
+              auth: 'bearer',
+              params: []
+            },
+            {
+              group: 'Thiết bị (Devices)',
+              method: 'DELETE',
+              path: '/api/devices/{id}',
+              summary: 'Xóa Thiết bị',
+              desc: 'Hủy ghép đôi và xóa thiết bị khỏi hệ thống.',
+              auth: 'bearer',
+              params: [
+                { name: 'id', type: 'path', required: true, description: 'ID của thiết bị cần xóa', default: '1' }
+              ]
+            },
+            {
+              group: 'Webhooks & Tích hợp',
+              method: 'GET',
+              path: '/api/tenant-webhooks',
+              summary: 'Danh sách Webhooks',
+              desc: 'Lấy danh sách các Webhook endpoints cấu hình trên hệ thống.',
+              auth: 'bearer',
+              params: []
+            },
+            {
+              group: 'Webhooks & Tích hợp',
+              method: 'POST',
+              path: '/api/tenant-webhooks',
+              summary: 'Thêm Webhook mới',
+              desc: 'Tạo mới một webhook endpoint cho Tenant để tự động đẩy thông báo biến động số dư.',
+              auth: 'bearer',
+              params: [],
+              body: {
+                tenant_id: 1,
+                name: 'Sapo Endpoint',
+                url: 'https://webhook.site/test',
+                secret: 'super-secret-key-123',
+                is_active: true
+              }
+            },
+            {
+              group: 'Webhooks & Tích hợp',
+              method: 'POST',
+              path: '/api/tenant-webhooks/{webhook}/parser-config',
+              summary: 'Lưu Regex bóc tách Webhook',
+              desc: 'Lưu cấu hình Regex bóc tách tuỳ chỉnh cho Webhook chỉ định.',
+              auth: 'bearer',
+              params: [
+                { name: 'webhook', type: 'path', required: true, description: 'ID của Webhook', default: '1' }
+              ],
+              body: {
+                regex_pattern: 'GD: \\+(\\d+) VND. ND: (\\w+)',
+                amount_group: 1,
+                content_group: 2
+              }
+            },
+            {
+              group: 'Webhooks & Tích hợp',
+              method: 'DELETE',
+              path: '/api/tenant-webhooks/{webhook}/parser-config',
+              summary: 'Xóa Regex bóc tách Webhook',
+              desc: 'Xóa cấu hình Regex bóc tách tuỳ chỉnh của Webhook chỉ định để quay lại dùng cấu hình mặc định của Tenant.',
+              auth: 'bearer',
+              params: [
+                { name: 'webhook', type: 'path', required: true, description: 'ID của Webhook', default: '1' }
+              ]
+            },
+            {
+              group: 'Webhooks & Tích hợp',
+              method: 'POST',
+              path: '/api/webhooks/test',
+              summary: 'Gửi thử Webhook Payload',
+              desc: 'Mô phỏng gửi một Payload JSON đến URL chỉ định để test phản hồi từ máy chủ của bạn.',
+              auth: 'bearer',
+              params: [],
+              body: {
+                url: 'https://webhook.site/test',
+                payload: {
+                  event_id: 'evt_test_swagger',
+                  type: 'bank.credit_alert',
+                  data: {
+                    amount: 150000,
+                    currency: 'VND',
+                    direction: 'in',
+                    order_code: 'DH9999',
+                    transfer_content: 'DH9999 thanh toan test'
+                  }
+                }
+              }
+            },
+            {
+              group: 'Ứng dụng Di động (Mobile)',
+              method: 'POST',
+              path: '/api/v1/mobile/pair',
+              summary: 'Kích hoạt ghép đôi thiết bị',
+              desc: 'Kích hoạt ghép đôi ứng dụng di động Android với Token sinh ra từ web dashboard. Trả về device_id và device_secret để dùng cho các request tiếp theo.',
+              auth: 'public',
+              params: [],
+              body: {
+                pairing_token: 'NHAP_TOKEN_PAIRING_TREN_WEB',
+                device_name: 'Google Pixel 6'
+              }
+            },
+            {
+              group: 'Ứng dụng Di động (Mobile)',
+              method: 'POST',
+              path: '/api/v1/mobile/heartbeat',
+              summary: 'Gửi trạng thái thiết bị (Heartbeat)',
+              desc: 'Điện thoại gửi nhịp tim định kỳ để báo cáo dung lượng pin, trạng thái sạc và tin nhắn chờ xử lý. Yêu cầu ký HMAC.',
+              auth: 'hmac',
+              params: [],
+              body: {
+                battery_level: 95,
+                is_charging: true,
+                queue_pending: 0
+              }
+            },
+            {
+              group: 'Ứng dụng Di động (Mobile)',
+              method: 'POST',
+              path: '/api/v1/mobile/notifications',
+              summary: 'Đẩy thông báo/SMS nhận được',
+              desc: 'Đẩy thông báo/SMS biến động số dư đã đọc từ điện thoại lên Server để bóc tách. Yêu cầu ký HMAC.',
+              auth: 'hmac',
+              params: [],
+              body: {
+                package_name: 'com.vietcombank',
+                app_name: 'Vietcombank',
+                title: 'Biến động số dư',
+                text: 'Vietcombank GD: +150,000 VND. ND: DH9999 thanh toan test',
+                posted_at: Date.now()
+              }
+            }
+          ];
+
+          // Web Crypto API HMAC calculation helper
+          async function calculateHMAC(message, secret) {
+            try {
+              const encoder = new TextEncoder();
+              const keyData = encoder.encode(secret);
+              const messageData = encoder.encode(message);
+              const cryptoKey = await window.crypto.subtle.importKey(
+                'raw',
+                keyData,
+                { name: 'HMAC', hash: { name: 'SHA-256' } },
+                false,
+                ['sign']
+              );
+              const signatureBuffer = await window.crypto.subtle.sign('HMAC', cryptoKey, messageData);
+              return Array.from(new Uint8Array(signatureBuffer))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+            } catch (e) {
+              console.error('Lỗi tính HMAC:', e);
+              return '';
+            }
+          }
+
+          // Initializer called from dashboard.js when api-docs tab is active
+          window.initSwaggerPlayground = function() {
+            const container = document.getElementById('swagger-playground-container');
+            if (!container) return;
+            
+            // Check if already rendered
+            if (!container.querySelector('.swagger-auth-bar')) {
+              renderSwagger();
+            } else {
+              // Update token if already rendered
+              const currentToken = localStorage.getItem('admin_token') || '';
+              const input = document.getElementById('sw-auth-token');
+              if (input) {
+                input.value = currentToken;
+                updateSwaggerAuthStatus(currentToken);
+              }
+            }
+          };
+
+          // Render Swagger UI dynamically
+          function renderSwagger() {
+            const container = document.getElementById('swagger-playground-container');
+            if (!container) return;
+            
+            const currentToken = localStorage.getItem('admin_token') || '';
+            
+            // Group endpoints
+            const groups = {};
+            swaggerEndpoints.forEach((ep, index) => {
+              if (!groups[ep.group]) {
+                groups[ep.group] = [];
+              }
+              groups[ep.group].push({ ep, index });
+            });
+            
+            let html = '';
+            
+            // Authorization Bar
+            html += `
+              <div class="swagger-auth-bar" style="margin-bottom: 20px;">
+                <div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span id="swagger-auth-badge" class="swagger-auth-status ${currentToken ? 'authorized' : 'unauthorized'}">
+                      <span class="auth-icon">${currentToken ? '🔒' : '🔓'}</span>
+                      <span class="auth-text" style="font-size: 13px;">${currentToken ? 'Authorized (Bearer)' : 'Unauthorized'}</span>
+                    </span>
+                    <span style="font-size: 12px; color: var(--muted);">| Dashboard API Token</span>
+                  </div>
+                  <p style="margin: 0; font-size: 12.5px; color: var(--muted);">Token của quản trị viên được tự động lấy từ phiên đăng nhập hiện tại.</p>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center; width: 320px;">
+                  <input type="text" id="sw-auth-token" class="swagger-input" value="${currentToken}" placeholder="Nhập Bearer Token..." style="font-family: monospace;" oninput="updateSwaggerAuthStatus(this.value)" />
+                  <button class="ghost-button" onclick="resetSwaggerAuthToken()" style="padding: 6px 12px; height: 32px; font-size: 12px;">Reset</button>
+                </div>
+              </div>
+            `;
+            
+            // Filter/Search Input
+            html += `
+              <div class="swagger-search-bar" style="margin-bottom: 20px;">
+                <span class="swagger-search-icon">🔍</span>
+                <input type="text" id="swagger-search-input" class="swagger-search-input" placeholder="Lọc endpoint (Ví dụ: /tenants hoặc GET)..." oninput="filterSwaggerEndpoints(this.value)" />
+              </div>
+            `;
+            
+            // Render groups & endpoints
+            Object.keys(groups).forEach(groupName => {
+              html += `<div class="swagger-group" data-group-name="${groupName}">`;
+              html += `<div class="swagger-group-title">${groupName}</div>`;
+              
+              groups[groupName].forEach(({ ep, index }) => {
+                const methodClass = ep.method.toLowerCase();
+                const hasParams = ep.params && ep.params.length > 0;
+                const hasBody = ep.body !== undefined;
+                const isHmac = ep.auth === 'hmac';
+                
+                html += `
+                  <div class="swagger-endpoint ${methodClass}" id="sw-ep-card-${index}">
+                    <div class="swagger-header" onclick="toggleSwaggerContent(${index})">
+                      <div class="swagger-header-left">
+                        <span class="swagger-badge">${ep.method}</span>
+                        <span class="swagger-path">${ep.path}</span>
+                        <span class="swagger-summary">— ${ep.summary}</span>
+                      </div>
+                      <div class="swagger-header-right">
+                        <span style="font-size: 11px; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.05); font-weight: 500;">
+                          ${ep.auth === 'bearer' ? '🔒 Bearer' : ep.auth === 'hmac' ? '🔒 HMAC' : '🔑 Public'}
+                        </span>
+                        <span class="swagger-arrow">▼</span>
+                      </div>
+                    </div>
+                    
+                    <div class="swagger-content" id="sw-content-${index}">
+                      <div class="swagger-desc">${ep.desc}</div>
+                      
+                      ${isHmac ? `
+                        <div class="swagger-tryout-panel" style="background: var(--surface-2); border: 1px solid var(--line); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 16px;">
+                          <div style="font-weight: 700; font-size: 12px; color: var(--warn); margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+                            ⚠️ Yêu cầu ký HMAC-SHA256
+                          </div>
+                          <p style="margin: 0 0 10px 0; font-size: 12px; color: var(--muted);">Request sẽ tự động được thêm các header <code>X-Device-Id</code>, <code>X-Timestamp</code>, và <code>X-Signature</code> được tính toán từ Device Secret.</p>
+                          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div>
+                              <label style="font-size: 11px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 4px;">X-Device-Id</label>
+                              <input type="text" id="sw-device-id-${index}" class="swagger-input" value="dev_demo" placeholder="Device ID..." />
+                            </div>
+                            <div>
+                              <label style="font-size: 11px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 4px;">Device Secret (Khoá băm chữ ký)</label>
+                              <input type="text" id="sw-device-secret-${index}" class="swagger-input" value="sec_demo" placeholder="Device Secret..." />
+                            </div>
+                          </div>
+                        </div>
+                      ` : ''}
+
+                      ${hasParams ? `
+                        <div class="swagger-section-title">Tham số đường dẫn (Path Parameters)</div>
+                        <table class="swagger-params-table">
+                          <thead>
+                            <tr>
+                              <th style="width: 25%;">Tên tham số</th>
+                              <th style="width: 20%;">Loại</th>
+                              <th style="width: 30%;">Mô tả</th>
+                              <th style="width: 25%;">Giá trị</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            ${ep.params.map(param => `
+                              <tr>
+                                <td>
+                                  <span class="swagger-param-name">${param.name}</span>
+                                  ${param.required ? `<span class="swagger-param-required">*</span>` : ''}
+                                </td>
+                                <td style="color: var(--muted);">${param.type}</td>
+                                <td>${param.description}</td>
+                                <td>
+                                  <input type="text" id="sw-param-${index}-${param.name}" class="swagger-input" value="${param.default || ''}" />
+                                </td>
+                              </tr>
+                            `).join('')}
+                          </tbody>
+                        </table>
+                      ` : ''}
+                      
+                      ${hasBody ? `
+                        <div class="swagger-section-title">Request Body (JSON)</div>
+                        <div class="swagger-body-wrapper">
+                          <textarea id="sw-body-json-${index}" class="swagger-textarea" rows="6">${JSON.stringify(ep.body, null, 2)}</textarea>
+                          <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px;">
+                            <button type="button" class="ghost-button" onclick="formatSwaggerJson(${index})" style="padding: 2px 8px; height: 24px; font-size: 11px;">Format JSON</button>
+                            <button type="button" class="ghost-button" onclick="resetSwaggerJson(${index})" style="padding: 2px 8px; height: 24px; font-size: 11px;">Reset Body</button>
+                          </div>
+                        </div>
+                      ` : ''}
+                      
+                      <div class="swagger-actions">
+                        <button type="button" class="primary-button" onclick="executeSwaggerEndpoint(${index})" style="padding: 6px 16px; height: 32px; font-size: 12px; font-weight: 600;">Execute</button>
+                        <button type="button" class="ghost-button" onclick="clearSwaggerResponse(${index})" style="padding: 6px 12px; height: 32px; font-size: 12px;">Clear Response</button>
+                      </div>
+                      
+                      <div class="swagger-response" id="sw-res-${index}" style="display: none;">
+                        <div class="swagger-response-header">
+                          <div>Phản hồi từ máy chủ: <strong id="sw-status-${index}">—</strong></div>
+                          <div id="sw-time-${index}">—</div>
+                        </div>
+                        <pre class="swagger-response-body" id="sw-body-${index}">—</pre>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              });
+              
+              html += `</div>`;
+            });
+            
+            container.innerHTML = html;
+          }
+
+          // UI Action Helper Functions
+          window.toggleSwaggerContent = function(index) {
+            const card = document.getElementById(`sw-ep-card-${index}`);
+            if (card) {
+              card.classList.toggle('is-expanded');
+            }
+          };
+
+          window.updateSwaggerAuthStatus = function(val) {
+            const badge = document.getElementById('swagger-auth-badge');
+            if (badge) {
+              if (val.trim()) {
+                badge.className = 'swagger-auth-status authorized';
+                badge.querySelector('.auth-icon').textContent = '🔒';
+                badge.querySelector('.auth-text').textContent = 'Authorized (Bearer)';
+              } else {
+                badge.className = 'swagger-auth-status unauthorized';
+                badge.querySelector('.auth-icon').textContent = '🔓';
+                badge.querySelector('.auth-text').textContent = 'Unauthorized';
+              }
+            }
+          };
+
+          window.resetSwaggerAuthToken = function() {
+            const currentToken = localStorage.getItem('admin_token') || '';
+            const input = document.getElementById('sw-auth-token');
+            if (input) {
+              input.value = currentToken;
+              updateSwaggerAuthStatus(currentToken);
+            }
+          };
+
+          window.formatSwaggerJson = function(index) {
+            const textarea = document.getElementById(`sw-body-json-${index}`);
+            if (textarea) {
+              try {
+                const obj = JSON.parse(textarea.value);
+                textarea.value = JSON.stringify(obj, null, 2);
+              } catch (e) {
+                alert('JSON không hợp lệ: ' + e.message);
+              }
+            }
+          };
+
+          window.resetSwaggerJson = function(index) {
+            const textarea = document.getElementById(`sw-body-json-${index}`);
+            if (textarea) {
+              const ep = swaggerEndpoints[index];
+              if (ep && ep.body !== undefined) {
+                textarea.value = JSON.stringify(ep.body, null, 2);
+              }
+            }
+          };
+
+          window.clearSwaggerResponse = function(index) {
+            const resDiv = document.getElementById(`sw-res-${index}`);
+            if (resDiv) {
+              resDiv.style.display = 'none';
+              document.getElementById(`sw-status-${index}`).textContent = '—';
+              document.getElementById(`sw-time-${index}`).textContent = '—';
+              document.getElementById(`sw-body-${index}`).textContent = '—';
+            }
+          };
+
+          window.filterSwaggerEndpoints = function(query) {
+            const normalizedQuery = query.trim().toLowerCase();
+            
+            swaggerEndpoints.forEach((ep, index) => {
+              const card = document.getElementById(`sw-ep-card-${index}`);
+              if (!card) return;
+              
+              const method = ep.method.toLowerCase();
+              const path = ep.path.toLowerCase();
+              const summary = ep.summary.toLowerCase();
+              
+              const matches = method.includes(normalizedQuery) || 
+                              path.includes(normalizedQuery) || 
+                              summary.includes(normalizedQuery) ||
+                              ep.group.toLowerCase().includes(normalizedQuery);
+                              
+              card.style.display = matches ? '' : 'none';
+            });
+            
+            // Show/Hide group headers based on children visibility
+            const groups = document.querySelectorAll('.swagger-group');
+            groups.forEach(group => {
+              const visibleCards = group.querySelectorAll('.swagger-endpoint:not([style*="display: none"])');
+              group.style.display = visibleCards.length > 0 ? '' : 'none';
+            });
+          };
+
+          // Main Request Execution Engine
+          window.executeSwaggerEndpoint = async function(index) {
+            const endpoint = swaggerEndpoints[index];
+            const startTime = performance.now();
+            
+            const statusEl = document.getElementById(`sw-status-${index}`);
+            const timeEl = document.getElementById(`sw-time-${index}`);
+            const bodyEl = document.getElementById(`sw-body-${index}`);
+            const resDiv = document.getElementById(`sw-res-${index}`);
+            
+            resDiv.style.display = 'block';
+            bodyEl.textContent = 'Đang gửi yêu cầu...';
+            
+            try {
+              // 1. Path Params replacement
+              let path = endpoint.path;
+              if (endpoint.params && endpoint.params.length > 0) {
+                for (const param of endpoint.params) {
+                  if (param.type === 'path') {
+                    const input = document.getElementById(`sw-param-${index}-${param.name}`);
+                    const inputVal = input ? input.value : '';
+                    path = path.replace(`{${param.name}}`, encodeURIComponent(inputVal));
+                  }
+                }
+              }
+              
+              // 2. Request body parsing
+              let bodyText = null;
+              let bodyObj = null;
+              const bodyTextarea = document.getElementById(`sw-body-json-${index}`);
+              if (bodyTextarea) {
+                bodyText = bodyTextarea.value.trim();
+                if (bodyText) {
+                  bodyObj = JSON.parse(bodyText);
+                }
+              }
+              
+              // 3. Headers setup
+              const headers = {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+              };
+              
+              // Authorization header
+              if (endpoint.auth === 'bearer') {
+                const tokenInput = document.getElementById('sw-auth-token');
+                const token = tokenInput ? tokenInput.value.trim() : '';
+                if (token) {
+                  headers['Authorization'] = `Bearer ${token}`;
+                }
+              } else if (endpoint.auth === 'hmac') {
+                const devIdInput = document.getElementById(`sw-device-id-${index}`);
+                const devSecInput = document.getElementById(`sw-device-secret-${index}`);
+                const deviceId = devIdInput ? devIdInput.value.trim() : 'dev_demo';
+                const deviceSecret = devSecInput ? devSecInput.value.trim() : 'sec_demo';
+                
+                const timestamp = Math.floor(Date.now() / 1000).toString();
+                const rawBody = bodyText || '';
+                
+                // Calculate HMAC using native Web Crypto API
+                const signature = await calculateHMAC(timestamp + '.' + rawBody, deviceSecret);
+                
+                headers['X-Device-Id'] = deviceId;
+                headers['X-Timestamp'] = timestamp;
+                headers['X-Signature'] = signature;
+              }
+              
+              // 4. Fetch options
+              const options = {
+                method: endpoint.method,
+                headers: headers
+              };
+              if (bodyObj && (endpoint.method === 'POST' || endpoint.method === 'PATCH' || endpoint.method === 'PUT')) {
+                options.body = JSON.stringify(bodyObj);
+              }
+              
+              // 5. Send Request
+              const response = await fetch(path, options);
+              const endTime = performance.now();
+              const timeMs = Math.round(endTime - startTime);
+              timeEl.textContent = `Thời gian: ${timeMs}ms`;
+              
+              statusEl.textContent = `${response.status} ${response.statusText}`;
+              if (response.ok) {
+                statusEl.className = 'swagger-response-status success';
+              } else {
+                statusEl.className = 'swagger-response-status error';
+              }
+              
+              let responseText = '';
+              const contentType = response.headers.get('content-type');
+              if (contentType && contentType.includes('application/json')) {
+                const data = await response.json();
+                responseText = JSON.stringify(data, null, 2);
+              } else {
+                responseText = await response.text();
+              }
+              
+              bodyEl.textContent = responseText;
+            } catch (error) {
+              const endTime = performance.now();
+              const timeMs = Math.round(endTime - startTime);
+              timeEl.textContent = `Thời gian: ${timeMs}ms`;
+              
+              statusEl.textContent = 'Error';
+              statusEl.className = 'swagger-response-status error';
+              bodyEl.textContent = error.message;
+            }
+          };
+        </script>
       </section>
     </main>
   </div>

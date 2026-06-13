@@ -299,6 +299,10 @@ function showView(view) {
   document.querySelectorAll('.view').forEach(el => el.classList.toggle('is-visible', el.id === view));
   document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('is-active', el.dataset.view === view));
   document.querySelector('#view-title').textContent = titles[view] || titles.overview;
+  
+  if (view === 'api-docs' && typeof window.initSwaggerPlayground === 'function') {
+    window.initSwaggerPlayground();
+  }
 }
 
 function renderQR(text) {
