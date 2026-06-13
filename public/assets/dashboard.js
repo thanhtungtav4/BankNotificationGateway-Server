@@ -119,8 +119,8 @@ function render() {
 }
 
 function renderTenantWebhooks() {
-  const count = document.querySelector('#webhook-count');
-  const tbody = document.querySelector('#webhook-rows');
+  const count = document.querySelector('#webhook-endpoint-count');
+  const tbody = document.querySelector('#webhook-endpoint-rows');
   if (!count || !tbody) return;
 
   count.textContent = `${tenantWebhooks.length} endpoint`;
@@ -140,7 +140,13 @@ function renderTenantWebhooks() {
           <tr data-webhook-id="${row.id}">
             <td>${tenantName}</td>
             <td>${row.name ?? '—'}${regexText}</td>
-            <td><code class="mono">${row.url}</code></td>
+            <td><code class="mono" style="font-size: 12px;">${row.url}</code></td>
+            <td>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <code class="mono" id="wh-sec-${row.id}" style="font-size: 11.5px;">${row.secret}</code>
+                <button class="ghost-button" data-copy-target="wh-sec-${row.id}" style="padding: 2px 6px; font-size: 11px; height: 22px;">Copy</button>
+              </div>
+            </td>
             <td><span class="badge ${active}">${row.is_active ? 'active' : 'paused'}</span></td>
             <td style="white-space:nowrap">
               <button class="ghost-button" data-action="toggle" data-id="${row.id}">${row.is_active ? 'Pause' : 'Active'}</button>
@@ -149,7 +155,7 @@ function renderTenantWebhooks() {
             </td>
           </tr>`;
       }).join('')
-    : `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">Chưa có endpoint nào. Thêm bên trái.</td></tr>`;
+    : `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">Chưa có endpoint nào. Thêm bên trái.</td></tr>`;
 }
 
 function syncTenantSelects() {
