@@ -1,0 +1,122 @@
+name: Laravel Server CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'server/**'
+  workflow_dispatch:
+
+env:
+  PHP_VERSION: '8.4'
+  NODE_VERSION: '20'
+
+jobs:
+  # Run tests
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: bank_notification_gateway_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, xml, ctype, zip, pdo, pdo_mysql, redis
+          coverage: xdebug
+
+      - name: Setup Composer
+        uses: composer/composer-install@v3
+
+      - name: Create Environment File
+        run: |
+          cp server/.env.example server/.env
+          php server/artisan key:generate
+          sed -i 's/DB_HOST=127.0.0.1/DB_HOST=127.0.0.1/g' server/.env
+          sed -i 's/DB_PORT=3306/DB_PORT=3306/g' server/.env
+          sed -i "s/DB_DATABASE=.*/DB_DATABASE=bank_notification_gateway_test/" server/.env
+          sed -i "s/DB_USERNAME=.*/DB_USERNAME=root/" server/.env
+          sed -i "s/DB_PASSWORD=.*/DB_PASSWORD=root/" server/.env
+
+      - name: Run Tests
+        run: |
+          cd server
+          php artisan test --coverage=text
+
+  # Deploy to staging
+  deploy-staging:
+    name: Deploy Staging
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Staging Server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            cd /var/www/notification.nttung.dev/htdocs
+            git pull origin main
+            composer install --no-dev --optimize-autoloader
+            php artisan migrate --force
+            php artisan route:clear
+            php artisan config:clear
+            php artisan cache:clear
+            echo "Deploy completed successfully"
+
+  # Security scan
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          cd server
+          composer install --no-dev
+
+      - name: Run Security Audit
+        run: |
+          cd server
+          composer audit --no-interaction

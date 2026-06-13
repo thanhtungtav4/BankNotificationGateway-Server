@@ -16,6 +16,11 @@ final class PairingTokenController
             'device_name' => ['nullable', 'string', 'max:120'],
         ]);
 
+        $user = $request->user();
+        if ($user instanceof \App\Models\TenantUser && ((int) $payload['tenant_id'] !== $user->tenant_id || !$user->isAdmin())) {
+            abort(403, 'Unauthorized action');
+        }
+
         $serverUrl = rtrim($payload['server_url'] ?? config('app.url'), '/');
         $pairingToken = $pairingService->createPairingToken((int) $payload['tenant_id'], $payload['device_name'] ?? null);
 

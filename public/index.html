@@ -45,9 +45,20 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
           <span>Webhook</span>
         </button>
+        <button class="nav-item" data-view="ai-assistant">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+            <path d="M15 9l-3 3 3 3"/>
+          </svg>
+          <span>Trợ lý AI</span>
+        </button>
         <button class="nav-item" data-view="setup">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
           <span>Pairing</span>
+        </button>
+        <button class="nav-item" id="logout-button" style="margin-top: 12px; color: var(--danger);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span>Đăng xuất</span>
         </button>
       </nav>
 
@@ -146,7 +157,7 @@
             </div>
             <div class="table-wrap">
               <table>
-                <thead><tr><th>ID</th><th>Tên</th><th>Plan</th><th>Trạng thái</th><th>Thiết bị</th><th>Webhook</th></tr></thead>
+                <thead><tr><th>ID</th><th>Tên</th><th>Plan</th><th>Trạng thái</th><th>Thiết bị</th><th>Webhook</th><th></th></tr></thead>
                 <tbody id="tenant-rows"></tbody>
               </table>
             </div>
@@ -161,6 +172,16 @@
             <span class="panel-sub">Heartbeat & queue</span>
           </div>
           <div class="card-grid" id="device-cards"></div>
+        </div>
+      </section>
+
+      <section class="view" id="tenant-detail" hidden>
+        <div class="panel">
+          <div class="panel-head">
+            <h2 id="tenant-detail-title">Chi tiết tenant</h2>
+            <button class="ghost-button" onclick="showView('tenants')">← Quay lại</button>
+          </div>
+          <div id="tenant-detail-content"></div>
         </div>
       </section>
 
@@ -233,6 +254,146 @@
                 <thead><tr><th>Tenant</th><th>Endpoint</th><th>URL</th><th>Status</th><th>HTTP</th></tr></thead>
                 <tbody id="webhook-rows"></tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="ai-assistant">
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Sinh Regex tự động</h2>
+              <span class="panel-sub" id="ai-regex-status">Nhập tin nhắn mẫu để AI phân tích</span>
+            </div>
+            <form class="form-grid" id="ai-regex-form">
+              <label>Tin nhắn biến động số dư mẫu</label>
+              <textarea id="ai-regex-sample" name="sample_text" rows="4" placeholder="VD: Vietcombank GD: +50,000 VND. ND: DH123456 thanh toan" required style="background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 8px 12px; font-family: inherit; font-size: 14px; width: 100%; box-sizing: border-box; resize: vertical;"></textarea>
+              
+              <div class="highlighter-controls" style="margin-top: 4px; margin-bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" class="ghost-button" id="btn-select-amount" style="font-size: 12px; padding: 4px 8px;">💵 Chọn làm Số tiền</button>
+                <button type="button" class="ghost-button" id="btn-select-order" style="font-size: 12px; padding: 4px 8px;">📦 Chọn làm Mã đơn</button>
+                <button type="button" class="ghost-button" id="btn-select-content" style="font-size: 12px; padding: 4px 8px;">📝 Chọn làm Nội dung</button>
+              </div>
+
+              <div class="highlighter-selections" style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px; font-size: 12px;">
+                <div id="selection-amount-row" style="display: none; background: var(--surface); border: 1px solid var(--line); padding: 6px 10px; border-radius: var(--radius-sm);">
+                  <span style="color: var(--text-muted);">Số tiền cần bắt:</span> <strong id="selected-amount" style="color: var(--success); font-family: var(--font-mono);"></strong>
+                  <button type="button" class="ghost-button" id="clear-selected-amount" style="padding: 2px 6px; margin-left: 10px; font-size: 10px; height: auto; color: var(--danger); border-color: transparent;">Xoá</button>
+                </div>
+                <div id="selection-order-row" style="display: none; background: var(--surface); border: 1px solid var(--line); padding: 6px 10px; border-radius: var(--radius-sm);">
+                  <span style="color: var(--text-muted);">Mã đơn cần bắt:</span> <strong id="selected-order" style="color: var(--primary); font-family: var(--font-mono);"></strong>
+                  <button type="button" class="ghost-button" id="clear-selected-order" style="padding: 2px 6px; margin-left: 10px; font-size: 10px; height: auto; color: var(--danger); border-color: transparent;">Xoá</button>
+                </div>
+                <div id="selection-content-row" style="display: none; background: var(--surface); border: 1px solid var(--line); padding: 6px 10px; border-radius: var(--radius-sm);">
+                  <span style="color: var(--text-muted);">Nội dung cần bắt:</span> <strong id="selected-content" style="font-family: var(--font-mono);"></strong>
+                  <button type="button" class="ghost-button" id="clear-selected-content" style="padding: 2px 6px; margin-left: 10px; font-size: 10px; height: auto; color: var(--danger); border-color: transparent;">Xoá</button>
+                </div>
+              </div>
+              
+              <label>Tên ngân hàng (tùy chọn)</label>
+              <input name="bank_name" placeholder="VD: Vietcombank" style="width: 100%;" />
+              
+              <label>AI Provider</label>
+              <select name="provider" style="background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 8px 12px; font-size: 14px; width: 100%; box-sizing: border-box;">
+                <option value="">Mặc định (VPS 163)</option>
+                <option value="vps-163">VPS 163 (Claude 4.5)</option>
+                <option value="vps-103">VPS 103 (Claude 4.5)</option>
+                <option value="opencode">OpenCode (Qwen 3.6)</option>
+              </select>
+              
+              <button class="primary-button full" type="submit" id="ai-regex-submit">Sinh Regex bằng AI</button>
+            </form>
+
+            <div class="panel-result" id="ai-regex-result" style="margin-top: 20px; display: none;">
+              <h3 style="margin-top: 0;">Kết quả sinh Regex</h3>
+              <div style="background: var(--surface); border: 1px solid var(--line); padding: 12px; border-radius: var(--radius-md); margin-bottom: 12px;">
+                <code id="ai-regex-pattern" style="font-family: var(--font-mono); color: var(--primary); font-weight: bold; font-size: 14px; word-break: break-all;"></code>
+              </div>
+              
+              <h4 style="margin-bottom: 8px;">Nhóm Capture Groups:</h4>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr><th>Trường thông tin</th><th>Nhóm group số</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Số tiền (Amount)</td><td><span class="badge" id="ai-group-amount">—</span></td></tr>
+                    <tr><td>Chiều giao dịch (Direction)</td><td><span class="badge" id="ai-group-direction">—</span></td></tr>
+                    <tr><td>Mã đơn hàng (Order Code)</td><td><span class="badge" id="ai-group-order">—</span></td></tr>
+                    <tr><td>Nội dung chuyển khoản (Content)</td><td><span class="badge" id="ai-group-content">—</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <h4 style="margin-bottom: 4px; margin-top: 12px;">Giải thích cơ chế:</h4>
+              <p id="ai-regex-explanation" style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0;"></p>
+              
+              <div style="margin-top: 12px; font-size: 11px; color: var(--text-muted);">
+                Model used: <span id="ai-regex-model" class="mono"></span> (<span id="ai-regex-provider" class="mono"></span>)
+              </div>
+
+              <div class="form-grid" style="margin-top: 15px; border-top: 1px solid var(--line); padding-top: 15px; display: flex; flex-direction: column; gap: 8px;">
+                <label style="margin-bottom: 2px; font-weight: bold;">Áp dụng cấu hình này cho Webhook</label>
+                <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
+                  <select id="ai-regex-webhook-select" style="background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 8px 12px; font-size: 14px; flex-grow: 1; min-width: 0; box-sizing: border-box;"></select>
+                  <button type="button" class="primary-button" id="btn-save-regex-config" style="padding: 8px 16px; white-space: nowrap; height: 38px;">Lưu cấu hình</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Phân tích giao dịch thử</h2>
+              <span class="panel-sub" id="ai-parse-status">Thử bóc tách trực tiếp bằng AI</span>
+            </div>
+            <form class="form-grid" id="ai-parse-form">
+              <label>Tin nhắn biến động số dư mẫu</label>
+              <textarea name="sample_text" rows="4" placeholder="VD: MB Bank GD: +50,000 VND. ND: DH123456 thanh toan" required style="background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 8px 12px; font-family: inherit; font-size: 14px; width: 100%; box-sizing: border-box; resize: vertical;"></textarea>
+              
+              <label>AI Provider</label>
+              <select name="provider" style="background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 8px 12px; font-size: 14px; width: 100%; box-sizing: border-box;">
+                <option value="">Mặc định (VPS 163)</option>
+                <option value="vps-163">VPS 163 (Claude 4.5)</option>
+                <option value="vps-103">VPS 103 (Claude 4.5)</option>
+                <option value="opencode">OpenCode (Qwen 3.6)</option>
+              </select>
+              
+              <button class="primary-button full" type="submit" id="ai-parse-submit">Phân tích bằng AI</button>
+            </form>
+
+            <div class="panel-result" id="ai-parse-result" style="margin-top: 20px; display: none;">
+              <h3 style="margin-top: 0;">Kết quả bóc tách dữ liệu</h3>
+              
+              <div class="metric-grid" style="grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px;">
+                <div style="background: var(--surface); border: 1px solid var(--line); padding: 12px; border-radius: var(--radius-md);">
+                  <span style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Số tiền</span>
+                  <strong id="ai-parse-amount" style="font-size: 18px; color: var(--success);">—</strong>
+                </div>
+                <div style="background: var(--surface); border: 1px solid var(--line); padding: 12px; border-radius: var(--radius-md);">
+                  <span style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Ngân hàng</span>
+                  <strong id="ai-parse-bank" style="font-size: 16px;">—</strong>
+                </div>
+                <div style="background: var(--surface); border: 1px solid var(--line); padding: 12px; border-radius: var(--radius-md);">
+                  <span style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Hướng giao dịch</span>
+                  <span id="ai-parse-direction-badge" class="badge">—</span>
+                </div>
+                <div style="background: var(--surface); border: 1px solid var(--line); padding: 12px; border-radius: var(--radius-md);">
+                  <span style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Mã đơn hàng</span>
+                  <span id="ai-parse-order" class="mono" style="font-weight: bold; font-size: 13px;">—</span>
+                </div>
+              </div>
+
+              <div style="background: var(--surface); border: 1px solid var(--line); padding: 12px; border-radius: var(--radius-md); margin-bottom: 12px;">
+                <span style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Nội dung chuyển khoản</span>
+                <p id="ai-parse-content" style="margin: 0; font-size: 13px; line-height: 1.4; word-break: break-all;"></p>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted);">
+                <span>Độ tin cậy: <strong id="ai-parse-confidence"></strong></span>
+                <span>Model: <span id="ai-parse-model" class="mono"></span> (<span id="ai-parse-provider" class="mono"></span>)</span>
+              </div>
             </div>
           </div>
         </div>
@@ -328,6 +489,288 @@
         </div>
       </section>
     </main>
+  </div>
+
+  <div id="landing-container" class="landing-container">
+    <header class="landing-header">
+      <div class="landing-nav-container">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 10l9-6 9 6"/><path d="M5 10v9h14v-9"/><path d="M9 14h6"/>
+            </svg>
+          </div>
+          <div class="brand-text">
+            <strong>Bank Gateway</strong>
+            <span>SaaS Control</span>
+          </div>
+        </div>
+        <nav class="landing-nav" aria-label="Landing page navigation">
+          <a href="#features">Tính năng</a>
+          <a href="#demo">Demo trực quan</a>
+          <a href="#pricing">Bảng giá</a>
+          <button class="primary-button landing-login-btn" id="landing-login-btn">Đăng nhập</button>
+        </nav>
+      </div>
+    </header>
+
+    <section class="landing-hero">
+      <div class="hero-content">
+        <span class="hero-badge">Cổng kết nối biến động số dư tức thì</span>
+        <h1>Lắng nghe số dư ngân hàng theo thời gian thực</h1>
+        <p>Bank Notification Gateway giúp tự động hóa nạp tiền và thanh toán bằng cách chuyển đổi tức thì các thông báo biến động số dư trên Android thành Webhook API tin cậy gửi trực tiếp đến server của bạn.</p>
+        <div class="hero-ctas">
+          <button class="primary-button hero-cta" id="hero-start-btn">Trải nghiệm ngay</button>
+          <a href="#demo" class="secondary-button hero-cta">Xem Demo</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="glow-sphere"></div>
+        <div class="glass-card mockup-log-card">
+          <div class="log-header">
+            <span class="dot green"></span>
+            <span>Real-time Ingest Log</span>
+          </div>
+          <div class="log-rows">
+            <div class="log-row">
+              <span class="time">17:45:02</span>
+              <span class="bank-tag mb">MB Bank</span>
+              <span class="amount green">+500,000đ</span>
+              <span class="status-ok">Webhook Sent</span>
+            </div>
+            <div class="log-row">
+              <span class="time">17:45:30</span>
+              <span class="bank-tag vcb">Vietcombank</span>
+              <span class="amount green">+2,350,000đ</span>
+              <span class="status-ok">Webhook Sent</span>
+            </div>
+            <div class="log-row">
+              <span class="time">17:46:12</span>
+              <span class="bank-tag tcb">Techcombank</span>
+              <span class="amount green">+150,000đ</span>
+              <span class="status-ok">Webhook Sent</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-section" id="demo">
+      <div class="section-head text-center">
+        <h2>Mô phỏng luồng hoạt động thực tế</h2>
+        <p>Bấm nút bên dưới để tạo một giao dịch giả lập và quan sát luồng truyền tải dữ liệu tự động.</p>
+      </div>
+
+      <div class="demo-playground">
+        <article class="panel demo-control-panel">
+          <div class="panel-head">
+            <h3>1. Tạo giao dịch giả lập</h3>
+            <span class="panel-sub">Nhập thông tin thanh toán cần test</span>
+          </div>
+          <div class="form-grid" style="margin-top: 16px;">
+            <label for="demo-bank">Ngân hàng nhận</label>
+            <select id="demo-bank" class="form-control">
+              <option value="MB Bank">MB Bank (Quân Đội)</option>
+              <option value="Vietcombank">Vietcombank</option>
+              <option value="Techcombank">Techcombank</option>
+            </select>
+            <label for="demo-amount">Số tiền nhận (VND)</label>
+            <input type="number" id="demo-amount" class="form-control" value="200000" />
+            <label for="demo-content">Nội dung giao dịch</label>
+            <input type="text" id="demo-content" class="form-control" value="NAP TIEN ACC123" />
+            <button class="primary-button full" id="demo-trigger-btn">
+              Gửi mock 200,000đ
+            </button>
+          </div>
+        </article>
+
+        <article class="phone-mockup">
+          <div class="phone-speaker"></div>
+          <div class="phone-screen">
+            <div class="phone-status-bar">
+              <span>17:47</span>
+              <span>🔋 100%</span>
+            </div>
+            
+            <div class="phone-content-area">
+              <div class="phone-app-bg">
+                <div class="phone-widget">
+                  <div class="widget-logo">BG</div>
+                  <div class="widget-text">
+                    <strong>Gateway Client</strong>
+                    <span id="phone-app-status">Đang lắng nghe...</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="phone-notification" id="phone-notif" style="display: none;">
+                <div class="notif-header">
+                  <span class="notif-app-name" id="notif-bank-name">MB Bank</span>
+                  <span class="notif-time">vừa xong</span>
+                </div>
+                <strong id="notif-title">Biến động số dư</strong>
+                <p id="notif-text">GD: +200,000đ luc 17:47. ND: NAP TIEN ACC123</p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel demo-terminal">
+          <div class="panel-head">
+            <h3>2. Nhận Webhook Payload</h3>
+            <span class="panel-sub">Dữ liệu JSON gửi đến server API của bạn</span>
+          </div>
+          <div class="terminal-body">
+            <pre class="terminal-code" id="terminal-payload">// Đang chờ sự kiện giả lập...</pre>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="landing-section" id="features">
+      <div class="section-head text-center">
+        <h2>Tính năng vượt trội</h2>
+        <p>Giải pháp tin cậy, không yêu cầu can thiệp sâu hay chia sẻ mật khẩu ngân hàng.</p>
+      </div>
+      <div class="features-grid">
+        <article class="panel feature-card">
+          <div class="feature-icon bg-green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <h3>Real-time Listening</h3>
+          <p>Nhận thông báo biến động số dư trong vòng 1-2 giây ngay khi giao dịch phát sinh tại tài khoản.</p>
+        </article>
+
+        <article class="panel feature-card">
+          <div class="feature-icon bg-blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </div>
+          <h3>Webhook Fan-out</h3>
+          <p>Một thiết bị có thể tự động chuyển tiếp thông báo đến nhiều URL webhook cùng lúc với cơ chế retry thông minh.</p>
+        </article>
+
+        <article class="panel feature-card">
+          <div class="feature-icon bg-purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3>Không Cần Mật Khẩu Ngân Hàng</h3>
+          <p>Bảo mật tuyệt đối. Hoàn toàn hoạt động thông qua việc lắng nghe thông báo đẩy từ app ngân hàng trên Android.</p>
+        </article>
+
+        <article class="panel feature-card">
+          <div class="feature-icon bg-yellow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          </div>
+          <h3>Multi-tenant Scoping</h3>
+          <p>Dễ dàng quản lý và phân phối thông tin cho nhiều đối tác, khách hàng khác nhau một cách an toàn và độc lập.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="landing-section" id="pricing">
+      <div class="section-head text-center">
+        <h2>Bảng giá dịch vụ</h2>
+        <p>Bắt đầu miễn phí và nâng cấp linh hoạt khi quy mô mở rộng.</p>
+      </div>
+      <div class="pricing-grid">
+        <article class="panel pricing-card">
+          <h3>Gói Miễn Phí (Trial)</h3>
+          <div class="price"><strong>0đ</strong><span>/ tháng</span></div>
+          <ul class="price-features">
+            <li>1 Tenant / Khách hàng</li>
+            <li>1 Thiết bị kết nối</li>
+            <li>1 Webhook URL active</li>
+            <li>Giới hạn 100 thông báo / ngày</li>
+            <li>Hỗ trợ qua email</li>
+          </ul>
+          <button class="secondary-button full pricing-cta">Bắt đầu ngay</button>
+        </article>
+
+        <article class="panel pricing-card featured">
+          <div class="featured-badge">Phổ biến nhất</div>
+          <h3>Gói Tiêu Chuẩn (Standard)</h3>
+          <div class="price"><strong>299,000đ</strong><span>/ tháng</span></div>
+          <ul class="price-features">
+            <li>5 Tenant / Khách hàng</li>
+            <li>5 Thiết bị kết nối</li>
+            <li>5 Webhook URL active</li>
+            <li>Không giới hạn số lượng thông báo</li>
+            <li>Hỗ trợ 24/7 qua telegram</li>
+          </ul>
+          <button class="primary-button full pricing-cta">Nâng cấp ngay</button>
+        </article>
+
+        <article class="panel pricing-card">
+          <h3>Gói Nâng Cao (Pro)</h3>
+          <div class="price"><strong>999,000đ</strong><span>/ tháng</span></div>
+          <ul class="price-features">
+            <li>Không giới hạn Tenant</li>
+            <li>Không giới hạn Thiết bị</li>
+            <li>Không giới hạn Webhook</li>
+            <li>Độ ưu tiên xử lý cao nhất</li>
+            <li>Hỗ trợ trực tiếp qua điện thoại</li>
+          </ul>
+          <button class="secondary-button full pricing-cta">Liên hệ tư vấn</button>
+        </article>
+      </div>
+    </section>
+
+    <footer class="landing-footer">
+      <p>&copy; 2026 Bank Notification Gateway. Bảo lưu mọi quyền.</p>
+    </footer>
+  </div>
+
+  <div id="auth-container" class="auth-container" style="display: none;">
+    <div class="auth-card">
+      <div class="brand" style="border-bottom: 0; padding-bottom: 0; align-self: center;">
+        <div class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 10l9-6 9 6"/><path d="M5 10v9h14v-9"/><path d="M9 14h6"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <strong>Bank Gateway</strong>
+          <span>SaaS Control</span>
+        </div>
+      </div>
+      
+      <!-- Login View -->
+      <div id="login-view" class="auth-view">
+        <h2>Đăng nhập</h2>
+        <p class="auth-subtitle">Nhập thông tin đăng nhập của bạn để tiếp tục</p>
+        <form id="login-form" class="form-grid">
+          <label>Vai trò</label>
+          <select name="login_type" id="login-type" style="background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 8px 12px; margin-bottom: 8px; font-size: 14px; width: 100%; box-sizing: border-box;">
+            <option value="admin">System Admin</option>
+            <option value="tenant">Customer (Khách hàng)</option>
+          </select>
+          <label>Email</label>
+          <input type="email" name="email" placeholder="admin@example.com" required />
+          <label>Mật khẩu</label>
+          <input type="password" name="password" placeholder="••••••••" required />
+          <button class="primary-button full" type="submit">Đăng nhập</button>
+        </form>
+        <p class="auth-toggle" id="register-toggle-p">Chưa có tài khoản? <a href="#" id="show-register">Đăng ký ngay</a></p>
+      </div>
+
+      <!-- Register View -->
+      <div id="register-view" class="auth-view" hidden>
+        <h2>Đăng ký Admin</h2>
+        <p class="auth-subtitle">Tạo tài khoản quản trị hệ thống</p>
+        <form id="register-form" class="form-grid">
+          <label>Họ tên</label>
+          <input type="text" name="name" placeholder="Administrator" required />
+          <label>Email</label>
+          <input type="email" name="email" placeholder="admin@example.com" required />
+          <label>Mật khẩu</label>
+          <input type="password" name="password" placeholder="Tối thiểu 8 ký tự" required />
+          <label>Xác nhận mật khẩu</label>
+          <input type="password" name="password_confirmation" placeholder="Nhập lại mật khẩu" required />
+          <button class="primary-button full" type="submit">Đăng ký</button>
+        </form>
+        <p class="auth-toggle">Đã có tài khoản? <a href="#" id="show-login">Đăng nhập</a></p>
+      </div>
+    </div>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>

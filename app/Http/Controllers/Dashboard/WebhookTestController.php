@@ -18,6 +18,11 @@ final class WebhookTestController
             'tenant_id' => ['required', 'integer', 'exists:tenants,id'],
         ]);
 
+        $user = $request->user();
+        if ($user instanceof \App\Models\TenantUser && ((int) $payload['tenant_id'] !== $user->tenant_id || !$user->isAdmin())) {
+            abort(403, 'Unauthorized action');
+        }
+
         $tenant = Tenant::query()->findOrFail($payload['tenant_id']);
 
         $webhooks = TenantWebhook::query()

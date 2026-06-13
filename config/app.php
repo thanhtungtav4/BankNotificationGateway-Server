@@ -11,7 +11,10 @@ return [
     'faker_locale' => 'vi_VN',
     'key' => env('APP_KEY'),
     'cipher' => 'AES-256-CBC',
-    'providers' => [
-        App\Providers\AppServiceProvider::class,
+    'maintenance' => [
+        'driver' => 'file',
     ],
+    'providers' => \Illuminate\Support\ServiceProvider::defaultProviders()->merge([
+        App\Providers\AppServiceProvider::class,
+    ])->toArray(),
 ];

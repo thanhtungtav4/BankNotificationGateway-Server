@@ -12,7 +12,13 @@ final class EnsureAdminUser
     {
         $user = $request->user();
 
-        abort_if(! $user || ! in_array($user->role ?? null, ['super_admin', 'admin'], true), 403, 'Admin access required');
+        abort_if(
+            ! $user || 
+            ! ($user instanceof \App\Models\AdminUser) || 
+            ! in_array($user->role ?? null, ['super_admin', 'admin'], true), 
+            403, 
+            'Admin access required'
+        );
 
         return $next($request);
     }

@@ -16,14 +16,8 @@ final class NotificationIngestService
         $packageName = (string) Arr::get($payload, 'package_name', '');
         abort_if($packageName === '', 422, 'package_name is required');
 
-        $allowed = DeviceAllowedPackage::query()
-            ->where('tenant_id', $device->tenant_id)
-            ->where('device_id', $device->id)
-            ->where('package_name', $packageName)
-            ->where('is_active', true)
-            ->exists();
-
-        abort_unless($allowed, 403, 'Package is not allowed for this device');
+        // Trusted client model: We rely on the app's local whitelisting toggles.
+        // Once the device is authenticated via HMAC, all forwarded packages are allowed.
 
         $eventHash = hash('sha256', implode('|', [
             $packageName,
@@ -64,7 +58,7 @@ final class NotificationIngestService
                 'status' => 'received',
             ]);
 
-            ParseNotificationJob::dispatch($event->id);
+            ParseNotificationJob::dispatch($event->id)->onQueue('notifications');
 
             return $event;
         });

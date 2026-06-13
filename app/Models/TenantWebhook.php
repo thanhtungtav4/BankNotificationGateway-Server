@@ -13,6 +13,7 @@ final class TenantWebhook extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'event_types' => 'array',
+        'bank_rules' => 'array',
     ];
 
     public function tenant(): BelongsTo

@@ -13,7 +13,11 @@ final class TenantWebhookController
     public function index(Request $request): JsonResponse
     {
         $query = TenantWebhook::query()->with('tenant')->latest();
-        if ($tenantId = $request->integer('tenant_id')) {
+        $user = $request->user();
+
+        if ($user instanceof \App\Models\TenantUser) {
+            $query->where('tenant_id', $user->tenant_id);
+        } else if ($tenantId = $request->integer('tenant_id')) {
             $query->where('tenant_id', $tenantId);
         }
 
@@ -31,6 +35,13 @@ final class TenantWebhookController
             'is_active' => ['nullable', 'boolean'],
         ]);
 
+        $user = $request->user();
+        if ($user instanceof \App\Models\TenantUser) {
+            if ($payload['tenant_id'] !== $user->tenant_id || !$user->isAdmin()) {
+                abort(403, 'Unauthorized action');
+            }
+        }
+
         $webhook = TenantWebhook::query()->create([
             'tenant_id' => $payload['tenant_id'],
             'name' => $payload['name'],
@@ -45,6 +56,13 @@ final class TenantWebhookController
 
     public function update(Request $request, TenantWebhook $webhook): JsonResponse
     {
+        $user = $request->user();
+        if ($user instanceof \App\Models\TenantUser) {
+            if ($webhook->tenant_id !== $user->tenant_id || !$user->isAdmin()) {
+                abort(403, 'Unauthorized action');
+            }
+        }
+
         $payload = $request->validate([
             'name' => ['sometimes', 'string', 'max:160'],
             'url' => ['sometimes', 'url', 'max:500'],
@@ -58,10 +76,69 @@ final class TenantWebhookController
         return response()->json(['data' => $webhook->fresh()]);
     }
 
-    public function destroy(TenantWebhook $webhook): JsonResponse
+    public function destroy(Request $request, TenantWebhook $webhook): JsonResponse
     {
+        $user = $request->user();
+        if ($user instanceof \App\Models\TenantUser) {
+            if ($webhook->tenant_id !== $user->tenant_id || !$user->isAdmin()) {
+                abort(403, 'Unauthorized action');
+            }
+        }
+
         $webhook->delete();
 
         return response()->json(['data' => ['id' => $webhook->id]]);
+    }
+
+    public function saveParserConfig(Request $request, TenantWebhook $webhook): JsonResponse
+    {
+        $user = $request->user();
+        if ($user instanceof \App\Models\TenantUser) {
+            if ($webhook->tenant_id !== $user->tenant_id || !$user->isAdmin()) {
+                abort(403, 'Unauthorized action');
+            }
+        }
+
+        $validated = $request->validate([
+            'regex' => ['required', 'string', 'max:500'],
+            'amount_group' => ['nullable', 'integer', 'min:0'],
+            'direction_group' => ['nullable', 'integer', 'min:0'],
+            'order_code_group' => ['nullable', 'integer', 'min:0'],
+            'transfer_content_group' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $webhook->update([
+            'bank_rules' => [
+                'regex' => $validated['regex'],
+                'amount_group' => $validated['amount_group'],
+                'direction_group' => $validated['direction_group'],
+                'order_code_group' => $validated['order_code_group'],
+                'transfer_content_group' => $validated['transfer_content_group'],
+            ]
+        ]);
+
+        return response()->json([
+            'message' => 'Saved parser configuration successfully',
+            'data' => $webhook->fresh(),
+        ]);
+    }
+
+    public function clearParserConfig(Request $request, TenantWebhook $webhook): JsonResponse
+    {
+        $user = $request->user();
+        if ($user instanceof \App\Models\TenantUser) {
+            if ($webhook->tenant_id !== $user->tenant_id || !$user->isAdmin()) {
+                abort(403, 'Unauthorized action');
+            }
+        }
+
+        $webhook->update([
+            'bank_rules' => null,
+        ]);
+
+        return response()->json([
+            'message' => 'Cleared parser configuration successfully',
+            'data' => $webhook->fresh(),
+        ]);
     }
 }
