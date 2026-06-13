@@ -929,6 +929,10 @@ if (hash_equals($expectedSignature, $signature)) {
                     <td style="padding: 10px;"><span class="badge" style="background: var(--success-soft); color: var(--success);">GET</span> <code class="mono">/audit-logs</code></td>
                     <td style="padding: 10px;">Truy xuất danh sách nhật ký kiểm toán hệ thống.</td>
                   </tr>
+                  <tr style="border-bottom: 1px solid var(--line-2);">
+                    <td style="padding: 10px;"><span class="badge" style="background: var(--success-soft); color: var(--success);">GET</span> <code class="mono">/v1/integration/transactions/lookup</code></td>
+                    <td style="padding: 10px;">Tra cứu giao dịch ngân hàng theo Mã đơn hàng (booking_id) và số tiền (amount).</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -1184,6 +1188,18 @@ if (hash_equals($expectedSignature, $signature)) {
                 text: 'Vietcombank GD: +150,000 VND. ND: DH9999 thanh toan test',
                 posted_at: Date.now()
               }
+            },
+            {
+              group: 'Tra cứu & Tích hợp',
+              method: 'GET',
+              path: '/api/v1/integration/transactions/lookup',
+              summary: 'Tra cứu giao dịch ngân hàng',
+              desc: 'Kiểm tra trạng thái giao dịch ngân hàng dựa trên Mã đơn hàng (booking_id) và Số tiền tối thiểu (amount). Yêu cầu Bearer Token.',
+              auth: 'bearer',
+              params: [
+                { name: 'booking_id', type: 'query', required: true, description: 'Mã đơn hàng cần tra cứu (order_code)', default: 'DH123456' },
+                { name: 'amount', type: 'query', required: true, description: 'Số tiền tối thiểu khớp', default: '50000' }
+              ]
             }
           ];
 
@@ -1325,7 +1341,7 @@ if (hash_equals($expectedSignature, $signature)) {
                       ` : ''}
 
                       ${hasParams ? `
-                        <div class="swagger-section-title">Tham số đường dẫn (Path Parameters)</div>
+                        <div class="swagger-section-title">Tham số yêu cầu (Parameters)</div>
                         <table class="swagger-params-table">
                           <thead>
                             <tr>
@@ -1342,7 +1358,7 @@ if (hash_equals($expectedSignature, $signature)) {
                                   <span class="swagger-param-name">${param.name}</span>
                                   ${param.required ? `<span class="swagger-param-required">*</span>` : ''}
                                 </td>
-                                <td style="color: var(--muted);">${param.type}</td>
+                                <td style="color: var(--muted);">${param.type === 'path' ? 'Path (Đường dẫn)' : 'Query (Tham số URL)'}</td>
                                 <td>${param.description}</td>
                                 <td>
                                   <input type="text" id="sw-param-${index}-${param.name}" class="swagger-input" value="${param.default || ''}" />
@@ -1492,16 +1508,22 @@ if (hash_equals($expectedSignature, $signature)) {
             bodyEl.textContent = 'Đang gửi yêu cầu...';
             
             try {
-              // 1. Path Params replacement
+              // 1. Path & Query Params replacement
               let path = endpoint.path;
+              const queryParams = [];
               if (endpoint.params && endpoint.params.length > 0) {
                 for (const param of endpoint.params) {
+                  const input = document.getElementById(`sw-param-${index}-${param.name}`);
+                  const inputVal = input ? input.value.trim() : '';
                   if (param.type === 'path') {
-                    const input = document.getElementById(`sw-param-${index}-${param.name}`);
-                    const inputVal = input ? input.value : '';
                     path = path.replace(`{${param.name}}`, encodeURIComponent(inputVal));
+                  } else if (param.type === 'query' && inputVal) {
+                    queryParams.push(`${encodeURIComponent(param.name)}=${encodeURIComponent(inputVal)}`);
                   }
                 }
+              }
+              if (queryParams.length > 0) {
+                path += '?' + queryParams.join('&');
               }
               
               // 2. Request body parsing
